@@ -1,45 +1,171 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Planning Poker 🃏</title>
+  
+  <!-- Tailwind CSS + DaisyUI -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom styles -->
   <link rel="stylesheet" href="style.css">
+  
+  <style>
+    /* Smooth transitions for all interactions */
+    * {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    /* Gradient backgrounds */
+    .bg-gradient-primary {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    
+    .bg-gradient-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Poker table gradient */
+    .poker-table-bg {
+      background: linear-gradient(135deg, #1a5f1a 0%, #0d4d0d 100%);
+      box-shadow: 
+        0 0 0 12px #8B4513,
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Avatar gradients */
+    .avatar-gradient-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .avatar-gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .avatar-gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .avatar-gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .avatar-gradient-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .avatar-gradient-6 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    
+    /* Card hover effect */
+    .vote-card:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5);
+    }
+    
+    .vote-card.selected {
+      transform: translateY(-15px) scale(1.1);
+      box-shadow: 0 20px 40px rgba(34, 197, 94, 0.6);
+    }
+  </style>
 </head>
-<body>
-  <div id="login-screen">
-    <div class="login-card">
-      <h1>🃏 Planning Poker</h1>
-      <input type="text" id="player-name" placeholder="Il tuo nome" />
-      <input type="text" id="room-id" placeholder="Room ID (opzionale)" />
-      <button id="join-btn">Entra al tavolo</button>
+<body class="bg-gradient-primary min-h-screen overflow-x-hidden">
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="card w-full max-w-md bg-gradient-card shadow-2xl">
+      <div class="card-body items-center text-center">
+        <div class="text-6xl mb-4 animate-bounce">🃏</div>
+        <h1 class="card-title text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          Planning Poker
+        </h1>
+        
+        <div class="form-control w-full gap-3">
+          <input 
+            type="text" 
+            id="player-name" 
+            placeholder="Il tuo nome" 
+            class="input input-bordered input-primary w-full text-lg"
+            autocomplete="off"
+          />
+          <input 
+            type="text" 
+            id="room-id" 
+            placeholder="Room ID (opzionale)" 
+            class="input input-bordered w-full"
+            autocomplete="off"
+          />
+          <button id="join-btn" class="btn btn-primary btn-lg w-full gap-2">
+            <span>Entra al tavolo</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="divider text-xs opacity-50">Press Enter to join</div>
+      </div>
     </div>
   </div>
 
-  <div id="game-screen" style="display: none;">
-    <div class="header">
-      <h1>🃏 Planning Poker</h1>
-      <div class="room-info">
-        Room: <span id="current-room"></span>
+  <!-- Game Screen -->
+  <div id="game-screen" class="hidden min-h-screen p-4 lg:p-8">
+    
+    <!-- Header -->
+    <div class="text-center mb-6 lg:mb-10">
+      <h1 class="text-3xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+        🃏 Planning Poker
+      </h1>
+      <div class="badge badge-primary badge-lg gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+        </svg>
+        Room: <span id="current-room" class="font-mono font-bold"></span>
       </div>
     </div>
 
-    <div class="poker-table">
-      <div id="players-container"></div>
-      
-      <div class="table-center">
-        <div id="result-display" style="display: none;">
-          <div class="result-title">Media dei voti:</div>
-          <div class="result-value" id="average-result">0</div>
-          <button id="new-round-btn">Nuovo round</button>
+    <!-- Poker Table Container -->
+    <div class="flex justify-center mb-6 lg:mb-10">
+      <div class="relative w-full max-w-4xl" style="aspect-ratio: 16/10;">
+        <!-- Poker Table -->
+        <div class="poker-table-bg absolute inset-0 rounded-full lg:rounded-[200px] flex items-center justify-center">
+          
+          <!-- Players Container -->
+          <div id="players-container" class="absolute inset-0"></div>
+          
+          <!-- Table Center -->
+          <div class="relative z-10 text-center">
+            <!-- Waiting Message -->
+            <div id="waiting-message" class="text-xl lg:text-2xl opacity-70 animate-pulse">
+              In attesa di voti...
+            </div>
+            
+            <!-- Result Display -->
+            <div id="result-display" class="hidden">
+              <div class="card bg-gradient-card shadow-2xl">
+                <div class="card-body items-center">
+                  <div class="text-sm lg:text-lg opacity-70 mb-2">Media dei voti</div>
+                  <div id="average-result" class="text-5xl lg:text-7xl font-bold text-success mb-4">0</div>
+                  <button id="new-round-btn" class="btn btn-warning gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Nuovo round
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="waiting-message">In attesa di voti...</div>
       </div>
     </div>
 
-    <div class="voting-area">
-      <div class="vote-title">Scegli il tuo voto:</div>
-      <div class="cards-container" id="cards"></div>
+    <!-- Voting Area -->
+    <div class="text-center">
+      <h2 class="text-xl lg:text-2xl font-semibold mb-4 lg:mb-6">Scegli il tuo voto:</h2>
+      
+      <!-- Cards Container - Responsive Grid -->
+      <div id="cards" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 lg:gap-4 max-w-5xl mx-auto px-2">
+        <!-- Cards will be generated by JavaScript -->
+      </div>
+      
+      <!-- Special Cards (?, ☕) -->
+      <div class="flex justify-center gap-3 mt-4 lg:mt-6">
+        <div class="vote-card special-card card bg-gradient-card cursor-pointer w-16 h-20 lg:w-20 lg:h-28 flex items-center justify-center text-3xl lg:text-4xl font-bold border-2 border-info hover:border-4" data-vote="?">
+          ?
+        </div>
+        <div class="vote-card special-card card bg-gradient-card cursor-pointer w-16 h-20 lg:w-20 lg:h-28 flex items-center justify-center text-3xl lg:text-4xl font-bold border-2 border-warning hover:border-4" data-vote="☕">
+          ☕
+        </div>
+      </div>
     </div>
   </div>
 

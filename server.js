@@ -48,6 +48,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('get-room-state', ({ roomId }) => {
+    if (rooms[roomId]) {
+      socket.emit('room-update', rooms[roomId]);
+    }
+  });
+
   socket.on('disconnect', () => {
     // Remove player from all rooms
     for (let roomId in rooms) {
