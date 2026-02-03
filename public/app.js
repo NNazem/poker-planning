@@ -10,50 +10,93 @@ const avatarGradients = [
   'avatar-gradient-4', 'avatar-gradient-5', 'avatar-gradient-6'
 ];
 
-// Login functionality
-const playerNameInput = document.getElementById('player-name');
-const roomIdInput = document.getElementById('room-id');
-const joinBtn = document.getElementById('join-btn');
-
-// Enter key support
-[playerNameInput, roomIdInput].forEach(input => {
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') joinRoom();
-  });
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+  initializeApp();
 });
 
-joinBtn.addEventListener('click', joinRoom);
+function initializeApp() {
+  // Login functionality
+  const playerNameInput = document.getElementById('player-name');
+  const roomIdInput = document.getElementById('room-id');
+  const joinBtn = document.getElementById('join-btn');
 
-function joinRoom() {
-  const playerName = playerNameInput.value.trim();
-  let roomId = roomIdInput.value.trim();
-  
-  if (!playerName) {
-    alert('Inserisci il tuo nome!');
-    playerNameInput.focus();
+  if (!playerNameInput || !roomIdInput || !joinBtn) {
+    console.error('Login elements not found');
     return;
   }
-  
-  if (!roomId) {
-    roomId = 'room-' + Math.random().toString(36).substr(2, 9);
+
+  // Enter key support
+  [playerNameInput, roomIdInput].forEach(input => {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') joinRoom();
+    });
+  });
+
+  joinBtn.addEventListener('click', joinRoom);
+
+  function joinRoom() {
+    const playerName = playerNameInput.value.trim();
+    let roomId = roomIdInput.value.trim();
+    
+    if (!playerName) {
+      alert('Inserisci il tuo nome!');
+      playerNameInput.focus();
+      return;
+    }
+    
+    if (!roomId) {
+      roomId = 'room-' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    currentPlayer = playerName;
+    currentRoom = roomId;
+    
+    socket.emit('join-room', { roomId, playerName });
+    
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    document.getElementById('current-room').textContent = roomId;
+    
+    // Generate voting cards after entering game
+    generateVotingCards();
+    
+    // Setup copy room ID functionality
+    const currentRoomElement = document.getElementById('current-room');
+    if (currentRoomElement) {
+      currentRoomElement.addEventListener('click', function() {
+        const roomId = this.textContent;
+        navigator.clipboard.writeText(roomId).then(() => {
+          const originalText = this.textContent;
+          this.textContent = '✓ Copiato!';
+          setTimeout(() => {
+            this.textContent = originalText;
+          }, 1500);
+        });
+      });
+    }
+    
+    // Setup new round button
+    const newRoundBtn = document.getElementById('new-round-btn');
+    if (newRoundBtn) {
+      newRoundBtn.addEventListener('click', () => {
+        socket.emit('new-round', { roomId: currentRoom });
+        myVote = null;
+        document.querySelectorAll('.vote-card').forEach(c => c.classList.remove('selected'));
+        
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 100, 50]);
+        }
+      });
+    }
   }
-  
-  currentPlayer = playerName;
-  currentRoom = roomId;
-  
-  socket.emit('join-room', { roomId, playerName });
-  
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('game-screen').classList.remove('hidden');
-  document.getElementById('current-room').textContent = roomId;
-  
-  // Generate voting cards after entering game
-  generateVotingCards();
 }
 
 // Generate voting cards (1-10)
 function generateVotingCards() {
   const cardsContainer = document.getElementById('cards');
+  if (!cardsContainer) return;
+  
   cardsContainer.innerHTML = ''; // Clear existing
   
   for (let i = 1; i <= 10; i++) {
@@ -87,18 +130,6 @@ function selectVote(vote, cardElement) {
   }
 }
 
-// New round
-document.getElementById('new-round-btn').addEventListener('click', () => {
-  socket.emit('new-round', { roomId: currentRoom });
-  myVote = null;
-  document.querySelectorAll('.vote-card').forEach(c => c.classList.remove('selected'));
-  
-  // Haptic feedback
-  if ('vibrate' in navigator) {
-    navigator.vibrate([50, 100, 50]);
-  }
-});
-
 // Update room state
 socket.on('room-update', (room) => {
   renderPlayers(room);
@@ -113,9 +144,12 @@ socket.on('room-update', (room) => {
 // Render players around the table
 function renderPlayers(room) {
   const container = document.getElementById('players-container');
+  if (!container) return;
+  
   container.innerHTML = '';
   
   const playerCount = room.players.length;
+  if (playerCount === 0) return;
   
   // Responsive radius calculation
   const containerWidth = container.offsetWidth;
@@ -177,9 +211,13 @@ function showResults(room) {
     average = 'N/A';
   }
   
-  document.getElementById('average-result').textContent = average;
-  document.getElementById('result-display').classList.remove('hidden');
-  document.getElementById('waiting-message').classList.add('hidden');
+  const avgElement = document.getElementById('average-result');
+  const resultElement = document.getElementById('result-display');
+  const waitingElement = document.getElementById('waiting-message');
+  
+  if (avgElement) avgElement.textContent = average;
+  if (resultElement) resultElement.classList.remove('hidden');
+  if (waitingElement) waitingElement.classList.add('hidden');
   
   // Celebration haptic
   if ('vibrate' in navigator) {
@@ -189,14 +227,16 @@ function showResults(room) {
 
 // Hide results
 function hideResults() {
-  document.getElementById('result-display').classList.add('hidden');
-  document.getElementById('waiting-message').classList.remove('hidden');
+  const resultElement = document.getElementById('result-display');
+  const waitingElement = document.getElementById('waiting-message');
+  
+  if (resultElement) resultElement.classList.add('hidden');
+  if (waitingElement) waitingElement.classList.remove('hidden');
 }
 
 // Handle disconnection
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
-  // Could show a reconnection UI here
 });
 
 socket.on('connect', () => {
@@ -214,21 +254,7 @@ window.addEventListener('resize', () => {
   resizeTimeout = setTimeout(() => {
     // Re-render players on resize to adjust positions
     if (currentRoom) {
-      // Request current room state
       socket.emit('get-room-state', { roomId: currentRoom });
     }
   }, 300);
-});
-
-// Copy room ID to clipboard on click
-document.getElementById('current-room').addEventListener('click', function() {
-  const roomId = this.textContent;
-  navigator.clipboard.writeText(roomId).then(() => {
-    // Visual feedback
-    const originalText = this.textContent;
-    this.textContent = '✓ Copiato!';
-    setTimeout(() => {
-      this.textContent = originalText;
-    }, 1500);
-  });
 });
