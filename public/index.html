@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planning Poker 🃏</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>🃏 Planning Poker</h1>
+      <input type="text" id="player-name" placeholder="Il tuo nome" />
+      <input type="text" id="room-id" placeholder="Room ID (opzionale)" />
+      <button id="join-btn">Entra al tavolo</button>
+    </div>
+  </div>
+
+  <div id="game-screen" style="display: none;">
+    <div class="header">
+      <h1>🃏 Planning Poker</h1>
+      <div class="room-info">
+        Room: <span id="current-room"></span>
+      </div>
+    </div>
+
+    <div class="poker-table">
+      <div id="players-container"></div>
+      
+      <div class="table-center">
+        <div id="result-display" style="display: none;">
+          <div class="result-title">Media dei voti:</div>
+          <div class="result-value" id="average-result">0</div>
+          <button id="new-round-btn">Nuovo round</button>
+        </div>
+        <div id="waiting-message">In attesa di voti...</div>
+      </div>
+    </div>
+
+    <div class="voting-area">
+      <div class="vote-title">Scegli il tuo voto:</div>
+      <div class="cards-container" id="cards"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
