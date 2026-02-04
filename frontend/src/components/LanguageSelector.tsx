@@ -4,6 +4,7 @@ const languages = [
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'eu', name: 'Euskara', flag: '🟢' },
   { code: 'br', name: 'Brezhoneg', flag: '🏴' }
 ];
 

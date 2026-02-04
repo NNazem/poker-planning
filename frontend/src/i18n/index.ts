@@ -5,9 +5,10 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import it from './locales/it.json';
 import es from './locales/es.json';
 import pt from './locales/pt.json';
+import eu from './locales/eu.json';
 import br from './locales/br.json';
 
-const supportedLngs = ['it', 'es', 'pt', 'br'];
+const supportedLngs = ['it', 'es', 'pt', 'eu', 'br'];
 
 i18n
   .use(LanguageDetector)
@@ -17,6 +18,7 @@ i18n
       it: { translation: it },
       es: { translation: es },
       pt: { translation: pt },
+      eu: { translation: eu },
       br: { translation: br }
     },
     supportedLngs,

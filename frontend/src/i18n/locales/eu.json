@@ -1,0 +1,33 @@
+{
+  "app": {
+    "title": "Planning Poker",
+    "subtitle": "Uncharted Taldea",
+    "motto": "Sic Parvis Magna"
+  },
+  "login": {
+    "title": "Gela batean sartu",
+    "namePlaceholder": "Zure izena",
+    "roomPlaceholder": "Gelaren kodea (aukerakoa)",
+    "joinButton": "Sartu",
+    "createNew": "Utzi hutsik gela berri bat sortzeko"
+  },
+  "game": {
+    "roomCode": "Gelaren Kodea",
+    "copyCode": "Kopiatu",
+    "copied": "Kopiatuta!",
+    "players": "Jokalariak",
+    "yourVote": "Zure Botoa",
+    "selectCard": "Aukeratu txartel bat botatzeko",
+    "waiting": "Botoen zain...",
+    "reveal": "Erakutsi Botoak",
+    "newRound": "Txanda Berria",
+    "consensus": "Adostasuna!",
+    "average": "Batez bestekoa",
+    "votes": "Botoak"
+  },
+  "player": {
+    "you": "(Zu)",
+    "voted": "Botatu du",
+    "waiting": "Pentsatzen..."
+  }
+}
