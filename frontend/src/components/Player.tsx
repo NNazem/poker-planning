@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import type { Player as PlayerType } from '../types';
 
@@ -20,24 +21,62 @@ interface PlayerProps {
 }
 
 export function Player({ player, position, index, hasVoted, vote, revealed }: PlayerProps) {
-  const { currentPlayer } = useGame();
+  const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
   const colorClass = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const [isPoked, setIsPoked] = useState(false);
+  const [showReaction, setShowReaction] = useState<string | null>(null);
+
+  // Handle poke animation
+  useEffect(() => {
+    if (pokeEvent?.target === player.id) {
+      setIsPoked(true);
+      // Vibrate if it's me
+      if (isMe && 'vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100, 50, 100]);
+      }
+      setTimeout(() => setIsPoked(false), 800);
+    }
+  }, [pokeEvent, player.id, isMe]);
+
+  // Handle reaction display
+  useEffect(() => {
+    if (reactionEvent?.from === player.id) {
+      setShowReaction(reactionEvent.emoji);
+      setTimeout(() => setShowReaction(null), 2000);
+    }
+  }, [reactionEvent, player.id]);
+
+  const handleClick = () => {
+    if (!isMe && !revealed) {
+      pokePlayer(player.id);
+    }
+  };
 
   return (
     <div 
-      className="player absolute flex flex-col items-center gap-1 animate-[playerJoin_0.5s_ease-out]"
+      className={`player absolute flex flex-col items-center gap-1 animate-[playerJoin_0.5s_ease-out] ${isPoked ? 'player-poked' : ''}`}
       style={{ 
         left: `${position.x}px`, 
         top: `${position.y}px`,
         transform: 'translate(-50%, -50%)'
       }}
     >
+      {/* Floating reaction */}
+      {showReaction && (
+        <div className="reaction-float" style={{ top: '-20px', left: '50%', transform: 'translateX(-50%)' }}>
+          {showReaction}
+        </div>
+      )}
+
       {/* Avatar */}
       <div 
+        onClick={handleClick}
         className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center 
           text-lg lg:text-xl font-bold bg-gradient-to-br ${colorClass}
-          border-3 border-white shadow-lg hover:scale-110 transition-transform`}
+          border-3 border-white shadow-lg transition-transform
+          ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
+        title={!isMe ? `Poke ${player.name}!` : ''}
       >
         {player.name.charAt(0).toUpperCase()}
       </div>

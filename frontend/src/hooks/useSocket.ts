@@ -5,18 +5,36 @@ const WS_URL = import.meta.env.DEV
   ? 'ws://localhost:3000/ws' 
   : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
+interface PokeEvent {
+  from: string;
+  fromName: string;
+  target: string;
+}
+
+interface ReactionEvent {
+  from: string;
+  fromName: string;
+  emoji: string;
+}
+
 interface UseSocketReturn {
   connected: boolean;
   roomState: RoomState | null;
+  pokeEvent: PokeEvent | null;
+  reactionEvent: ReactionEvent | null;
   joinRoom: (roomId: string, playerName: string) => void;
   vote: (roomId: string, vote: string) => void;
   newRound: (roomId: string) => void;
+  poke: (roomId: string, targetId: string) => void;
+  sendReaction: (roomId: string, emoji: string) => void;
 }
 
 export function useSocket(): UseSocketReturn {
   const ws = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
   const [roomState, setRoomState] = useState<RoomState | null>(null);
+  const [pokeEvent, setPokeEvent] = useState<PokeEvent | null>(null);
+  const [reactionEvent, setReactionEvent] = useState<ReactionEvent | null>(null);
 
   useEffect(() => {
     const connect = () => {
@@ -41,8 +59,20 @@ export function useSocket(): UseSocketReturn {
       ws.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          if (message.type === 'room-update') {
-            setRoomState(message.data);
+          switch (message.type) {
+            case 'room-update':
+              setRoomState(message.data);
+              break;
+            case 'poke':
+              setPokeEvent(message.data);
+              // Clear after animation
+              setTimeout(() => setPokeEvent(null), 1000);
+              break;
+            case 'reaction':
+              setReactionEvent(message.data);
+              // Clear after animation
+              setTimeout(() => setReactionEvent(null), 2000);
+              break;
           }
         } catch (error) {
           console.error('Failed to parse message:', error);
@@ -75,5 +105,13 @@ export function useSocket(): UseSocketReturn {
     sendMessage('new-round', { roomId });
   }, [sendMessage]);
 
-  return { connected, roomState, joinRoom, vote, newRound };
+  const poke = useCallback((roomId: string, targetId: string) => {
+    sendMessage('poke', { roomId, targetId });
+  }, [sendMessage]);
+
+  const sendReaction = useCallback((roomId: string, emoji: string) => {
+    sendMessage('reaction', { roomId, emoji });
+  }, [sendMessage]);
+
+  return { connected, roomState, pokeEvent, reactionEvent, joinRoom, vote, newRound, poke, sendReaction };
 }

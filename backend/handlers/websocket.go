@@ -47,6 +47,16 @@ type RoomIDData struct {
 	RoomID string `json:"roomId"`
 }
 
+type PokeData struct {
+	RoomID   string `json:"roomId"`
+	TargetID string `json:"targetId"`
+}
+
+type ReactionData struct {
+	RoomID string `json:"roomId"`
+	Emoji  string `json:"emoji"`
+}
+
 // HandleConnection handles a new WebSocket connection
 func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -138,6 +148,34 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 			if room, exists := h.roomService.GetRoom(data.RoomID); exists {
 				h.sendRoomUpdate(conn, room)
 			}
+		
+		case "poke":
+			var data PokeData
+			if err := json.Unmarshal(msg.Data, &data); err != nil {
+				continue
+			}
+			
+			if room, exists := h.roomService.GetRoom(data.RoomID); exists {
+				h.broadcastEvent(room, "poke", map[string]string{
+					"from": playerID,
+					"fromName": currentPlayer.Name,
+					"target": data.TargetID,
+				})
+			}
+		
+		case "reaction":
+			var data ReactionData
+			if err := json.Unmarshal(msg.Data, &data); err != nil {
+				continue
+			}
+			
+			if room, exists := h.roomService.GetRoom(data.RoomID); exists {
+				h.broadcastEvent(room, "reaction", map[string]string{
+					"from": playerID,
+					"fromName": currentPlayer.Name,
+					"emoji": data.Emoji,
+				})
+			}
 		}
 	}
 }
@@ -162,6 +200,26 @@ func (h *WebSocketHandler) broadcastRoomUpdate(room *models.Room) {
 	for _, player := range players {
 		if player.Conn != nil {
 			// Ignore write errors - player will be cleaned up on disconnect
+			player.Conn.WriteMessage(websocket.TextMessage, jsonMsg)
+		}
+	}
+}
+
+// broadcastEvent sends a custom event to all players in the room
+func (h *WebSocketHandler) broadcastEvent(room *models.Room, eventType string, data map[string]string) {
+	msg := map[string]interface{}{
+		"type": eventType,
+		"data": data,
+	}
+	
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+	
+	players := room.GetPlayers()
+	for _, player := range players {
+		if player.Conn != nil {
 			player.Conn.WriteMessage(websocket.TextMessage, jsonMsg)
 		}
 	}

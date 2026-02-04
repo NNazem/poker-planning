@@ -115,3 +115,56 @@
 .player-voted {
   animation: pokerPulse 1.5s ease-in-out infinite;
 }
+
+/* Poke shake animation */
+@keyframes pokeShake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  10% { transform: translate(-50%, -50%) rotate(-10deg); }
+  20% { transform: translate(-50%, -50%) rotate(10deg); }
+  30% { transform: translate(-50%, -50%) rotate(-10deg); }
+  40% { transform: translate(-50%, -50%) rotate(10deg); }
+  50% { transform: translate(-50%, -50%) rotate(-5deg); }
+  60% { transform: translate(-50%, -50%) rotate(5deg); }
+  70% { transform: translate(-50%, -50%) rotate(-2deg); }
+  80% { transform: translate(-50%, -50%) rotate(2deg); }
+  90% { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
+.player-poked {
+  animation: pokeShake 0.8s ease-in-out;
+}
+
+/* Floating emoji reaction */
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.5);
+  }
+}
+
+.reaction-float {
+  animation: floatUp 2s ease-out forwards;
+  position: absolute;
+  font-size: 2rem;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Player clickable for poke */
+.player-avatar-clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.player-avatar-clickable:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(255, 200, 0, 0.6);
+}
+
+.player-avatar-clickable:active {
+  transform: scale(0.95);
+}

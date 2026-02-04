@@ -2,12 +2,14 @@ import { useGame } from '../context/GameContext';
 import { PokerTable } from './PokerTable';
 import { VotingCards } from './VotingCards';
 
+const QUICK_REACTIONS = ['👍', '😂', '🔥', '💀', '🤔', '☕'];
+
 interface GameScreenProps {
   onBack: () => void;
 }
 
 export function GameScreen({ onBack }: GameScreenProps) {
-  const { currentRoom, connected } = useGame();
+  const { currentRoom, connected, sendReaction, roomState } = useGame();
 
   const copyRoomLink = () => {
     if (currentRoom) {
@@ -75,6 +77,24 @@ export function GameScreen({ onBack }: GameScreenProps) {
 
       {/* Voting Cards */}
       <VotingCards />
+
+      {/* Quick Reactions - only show while waiting */}
+      {!roomState?.revealed && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
+          <div className="flex gap-2 bg-base-300/80 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/10">
+            {QUICK_REACTIONS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => sendReaction(emoji)}
+                className="text-2xl hover:scale-125 active:scale-95 transition-transform"
+                title={`React with ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
