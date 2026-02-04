@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 const languages = [
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
   { code: 'br', name: 'Brezhoneg', flag: '🏴' }
 ];
 
