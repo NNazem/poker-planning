@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+frontend/node_modules
+frontend/dist
+
+# Go
+backend/poker-server
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Legacy Node.js files
+server.js
+bot.js
+public/
+package.json
+package-lock.json
+
+# Documentation
+README.md
+*.md
