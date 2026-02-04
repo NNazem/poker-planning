@@ -28,13 +28,50 @@
       backdrop-filter: blur(10px);
     }
     
-    /* Poker table gradient */
+    /* Poker table - Enhanced design */
     .poker-table-bg {
-      background: linear-gradient(135deg, #1a5f1a 0%, #0d4d0d 100%);
+      background: 
+        radial-gradient(ellipse at center, #1f7a1f 0%, #145214 50%, #0d3d0d 100%);
       box-shadow: 
-        0 0 0 12px #8B4513,
-        0 20px 50px rgba(0, 0, 0, 0.5),
-        inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        /* Outer gold trim */
+        0 0 0 4px #DAA520,
+        /* Wood border */
+        0 0 0 8px #5D3A1A,
+        0 0 0 12px #8B5A2B,
+        0 0 0 16px #3D2314,
+        /* Depth shadows */
+        0 25px 60px rgba(0, 0, 0, 0.6),
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        /* Inner felt depth */
+        inset 0 0 80px rgba(0, 0, 0, 0.4),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+    
+    /* Felt texture pattern */
+    .poker-table-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-image: 
+        radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.1) 100%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    
+    /* Center spotlight effect */
+    .poker-table-bg::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 60%;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
     }
     
     /* Avatar gradients */
@@ -101,9 +138,18 @@
     
     <!-- Header -->
     <div class="text-center mb-6 lg:mb-10">
+      <!-- Uncharted Team Logo -->
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Uncharted_logo.svg/200px-Uncharted_logo.svg.png" 
+             alt="Uncharted" 
+             class="h-8 lg:h-10 opacity-80 hover:opacity-100 transition-opacity"
+             onerror="this.style.display='none'">
+        <span class="text-xs lg:text-sm text-amber-400 font-semibold tracking-widest uppercase">Team</span>
+      </div>
       <h1 class="text-3xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
         🃏 Planning Poker
       </h1>
+      <p class="text-xs text-amber-500/60 italic mb-2">"Sic Parvis Magna"</p>
       <div class="badge badge-primary badge-lg gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
