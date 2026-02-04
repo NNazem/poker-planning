@@ -2,17 +2,33 @@ import { useGame } from '../context/GameContext';
 import { PokerTable } from './PokerTable';
 import { VotingCards } from './VotingCards';
 
-export function GameScreen() {
+interface GameScreenProps {
+  onBack: () => void;
+}
+
+export function GameScreen({ onBack }: GameScreenProps) {
   const { currentRoom, connected } = useGame();
 
-  const copyRoomId = () => {
+  const copyRoomLink = () => {
     if (currentRoom) {
-      navigator.clipboard.writeText(currentRoom);
+      const url = `${window.location.origin}?room=${currentRoom}`;
+      navigator.clipboard.writeText(url);
     }
   };
 
   return (
     <div className="min-h-screen p-4 lg:p-8 bg-gradient-primary">
+      {/* Back button */}
+      <button 
+        onClick={onBack}
+        className="absolute top-4 left-4 btn btn-ghost btn-sm gap-1"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Esci
+      </button>
+
       {/* Header */}
       <div className="text-center mb-6 lg:mb-10">
         {/* Uncharted branding */}
@@ -38,8 +54,8 @@ export function GameScreen() {
         <div className="flex items-center justify-center gap-2">
           <div 
             className="badge badge-primary badge-lg gap-2 cursor-pointer hover:badge-secondary transition-colors"
-            onClick={copyRoomId}
-            title="Click to copy"
+            onClick={copyRoomLink}
+            title="Click to copy invite link"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />

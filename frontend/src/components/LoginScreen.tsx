@@ -1,14 +1,22 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useState, useEffect, type KeyboardEvent } from 'react';
 import { useGame } from '../context/GameContext';
 
 interface LoginScreenProps {
-  onJoin: () => void;
+  onJoin: (roomId: string) => void;
+  initialRoom?: string | null;
 }
 
-export function LoginScreen({ onJoin }: LoginScreenProps) {
+export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
   const { joinRoom, connected } = useGame();
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
+
+  // Set initial room from URL
+  useEffect(() => {
+    if (initialRoom) {
+      setRoomId(initialRoom);
+    }
+  }, [initialRoom]);
 
   const handleJoin = () => {
     if (!playerName.trim()) {
@@ -18,7 +26,7 @@ export function LoginScreen({ onJoin }: LoginScreenProps) {
     
     const finalRoomId = roomId.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
     joinRoom(finalRoomId, playerName.trim());
-    onJoin();
+    onJoin(finalRoomId);
   };
 
   const handleKeyPress = (e: KeyboardEvent) => {
