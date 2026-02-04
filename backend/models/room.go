@@ -114,3 +114,13 @@ func (r *Room) IsEmpty() bool {
 	defer r.mu.RUnlock()
 	return len(r.Players) == 0
 }
+
+// GetPlayers returns a thread-safe copy of players slice
+func (r *Room) GetPlayers() []*Player {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	players := make([]*Player, len(r.Players))
+	copy(players, r.Players)
+	return players
+}

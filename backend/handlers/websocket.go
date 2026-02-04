@@ -156,11 +156,13 @@ func (h *WebSocketHandler) broadcastRoomUpdate(room *models.Room) {
 		return
 	}
 	
-	for _, player := range room.Players {
+	// Get thread-safe copy of players
+	players := room.GetPlayers()
+	
+	for _, player := range players {
 		if player.Conn != nil {
-			if err := player.Conn.WriteMessage(websocket.TextMessage, jsonMsg); err != nil {
-				log.Printf("Write error to %s: %v", player.Name, err)
-			}
+			// Ignore write errors - player will be cleaned up on disconnect
+			player.Conn.WriteMessage(websocket.TextMessage, jsonMsg)
 		}
 	}
 }
