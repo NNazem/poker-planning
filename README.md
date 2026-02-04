@@ -1,26 +1,23 @@
 # 🃏 Planning Poker
 
-Real-time Planning Poker for agile teams. Vote on story points together.
+Real-time Planning Poker for agile teams.
 
-## Run in 10 seconds
+## Quick Start
 
 ```bash
-docker run -p 3000:3000 ghcr.io/nnazem/poker-planning:latest
+docker run -p 3000:3000 $(docker build -q https://github.com/NNazem/poker-planning.git)
 ```
 
 Open http://localhost:3000
 
-That's it.
-
 ---
 
-## Build locally
+## Or clone & run
 
 ```bash
 git clone https://github.com/NNazem/poker-planning.git
 cd poker-planning
-docker build -t poker-planning .
-docker run -p 3000:3000 poker-planning
+docker compose up
 ```
 
 ## Features
@@ -28,14 +25,10 @@ docker run -p 3000:3000 poker-planning
 - Real-time WebSocket voting
 - Multiple rooms
 - Auto-reveal when everyone votes
-- Consensus detection with confetti
+- Consensus detection
 - 5 languages (IT, ES, PT, EU, BR)
-- Mobile friendly
+- Mobile responsive
 - ~15MB Docker image
-
-## Tech
-
-Go backend + React/TypeScript frontend. Single binary, single container.
 
 ## License
 
