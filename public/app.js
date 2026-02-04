@@ -214,10 +214,50 @@ function showResults(room) {
   const avgElement = document.getElementById('average-result');
   const resultElement = document.getElementById('result-display');
   const waitingElement = document.getElementById('waiting-message');
+  const individualVotesEl = document.getElementById('individual-votes');
+  const consensusBadge = document.getElementById('consensus-badge');
   
   if (avgElement) avgElement.textContent = average;
   if (resultElement) resultElement.classList.remove('hidden');
   if (waitingElement) waitingElement.classList.add('hidden');
+  
+  // Show individual votes with player names
+  if (individualVotesEl) {
+    individualVotesEl.innerHTML = '';
+    
+    room.players.forEach(player => {
+      const vote = room.votes[player.id];
+      if (vote !== undefined) {
+        const voteChip = document.createElement('div');
+        voteChip.className = 'flex items-center gap-1 bg-base-100 rounded-full px-2 py-1 text-sm border border-white/10';
+        
+        // Color code based on vote relative to average
+        let voteClass = 'text-white';
+        if (!isNaN(parseFloat(vote)) && !isNaN(parseFloat(average))) {
+          const diff = Math.abs(parseFloat(vote) - parseFloat(average));
+          if (diff < 1) voteClass = 'text-success';
+          else if (diff < 3) voteClass = 'text-warning';
+          else voteClass = 'text-error';
+        }
+        
+        voteChip.innerHTML = `
+          <span class="opacity-70 text-xs">${player.name.substring(0, 8)}</span>
+          <span class="font-bold ${voteClass}">${vote}</span>
+        `;
+        individualVotesEl.appendChild(voteChip);
+      }
+    });
+  }
+  
+  // Check for consensus (all same vote)
+  if (consensusBadge) {
+    const uniqueVotes = [...new Set(votes)];
+    if (uniqueVotes.length === 1 && votes.length > 1) {
+      consensusBadge.classList.remove('hidden');
+    } else {
+      consensusBadge.classList.add('hidden');
+    }
+  }
   
   // Celebration haptic
   if ('vibrate' in navigator) {
