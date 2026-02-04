@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
+import confetti from 'canvas-confetti';
 
 export function ResultsDisplay() {
   const { roomState, newRound, setMyVote } = useGame();
@@ -28,6 +29,48 @@ export function ResultsDisplay() {
     
     return { average: avg, individualVotes: votes, hasConsensus: consensus };
   }, [roomState]);
+
+  const prevRevealedRef = useRef(false);
+
+  // Confetti effect on consensus
+  useEffect(() => {
+    if (roomState?.revealed && !prevRevealedRef.current) {
+      // Just revealed
+      if (hasConsensus) {
+        // Big confetti celebration for consensus!
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+          colors: ['#22c55e', '#eab308', '#3b82f6', '#ef4444'],
+        });
+        
+        // Extra burst
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+          });
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+          });
+        }, 200);
+      } else {
+        // Small confetti for normal reveal
+        confetti({
+          particleCount: 30,
+          spread: 60,
+          origin: { y: 0.7 },
+        });
+      }
+    }
+    prevRevealedRef.current = roomState?.revealed ?? false;
+  }, [roomState?.revealed, hasConsensus]);
 
   const handleNewRound = () => {
     newRound();

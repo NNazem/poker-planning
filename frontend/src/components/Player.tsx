@@ -54,8 +54,8 @@ export function Player({ player, position, index, hasVoted, vote, revealed }: Pl
         <div className={`w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
           text-lg lg:text-xl font-bold shadow-lg border-2 border-white/30
           ${revealed 
-            ? 'bg-white text-gray-900' 
-            : 'bg-gradient-to-br from-green-500 to-green-600 text-white'}`}
+            ? 'bg-white text-gray-900 player-vote-reveal' 
+            : 'bg-gradient-to-br from-green-500 to-green-600 text-white vote-chip-enter player-voted'}`}
         >
           {revealed ? vote : '🃏'}
         </div>
