@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 
 const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
   { code: 'br', name: 'Brezhoneg', flag: '🏴' }
 ];
 

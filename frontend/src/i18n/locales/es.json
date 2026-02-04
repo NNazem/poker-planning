@@ -1,0 +1,33 @@
+{
+  "app": {
+    "title": "Planning Poker",
+    "subtitle": "Equipo Uncharted",
+    "motto": "Sic Parvis Magna"
+  },
+  "login": {
+    "title": "Unirse a una Sala",
+    "namePlaceholder": "Tu nombre",
+    "roomPlaceholder": "Código de sala (opcional)",
+    "joinButton": "Entrar",
+    "createNew": "Deja vacío para crear una nueva sala"
+  },
+  "game": {
+    "roomCode": "Código de Sala",
+    "copyCode": "Copiar",
+    "copied": "¡Copiado!",
+    "players": "Jugadores",
+    "yourVote": "Tu Voto",
+    "selectCard": "Selecciona una carta para votar",
+    "waiting": "Esperando votos...",
+    "reveal": "Revelar Votos",
+    "newRound": "Nueva Ronda",
+    "consensus": "¡Consenso!",
+    "average": "Promedio",
+    "votes": "Votos"
+  },
+  "player": {
+    "you": "(Tú)",
+    "voted": "Votado",
+    "waiting": "Pensando..."
+  }
+}
