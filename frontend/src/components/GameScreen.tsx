@@ -5,15 +5,13 @@ import { PokerTable } from './PokerTable';
 import { VotingCards } from './VotingCards';
 import { LanguageSelector } from './LanguageSelector';
 
-const QUICK_REACTIONS = ['👍', '😂', '🔥', '💀', '🤔', '☕'];
-
 interface GameScreenProps {
   onBack: () => void;
 }
 
 export function GameScreen({ onBack }: GameScreenProps) {
   const { t } = useTranslation();
-  const { currentRoom, connected, sendReaction, roomState } = useGame();
+  const { currentRoom, connected } = useGame();
   const [copied, setCopied] = useState(false);
 
   const copyRoomLink = () => {
@@ -27,18 +25,17 @@ export function GameScreen({ onBack }: GameScreenProps) {
 
   return (
     <div className="min-h-screen p-4 lg:p-8 bg-gradient-primary">
-      {/* Back button */}
-      <button 
-        onClick={onBack}
-        className="absolute top-4 left-4 btn btn-ghost btn-sm gap-1"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* Language selector */}
-      <div className="absolute top-4 right-4">
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-4">
+        <button 
+          onClick={onBack}
+          className="btn btn-ghost btn-sm btn-circle"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
         <LanguageSelector />
       </div>
 
@@ -89,24 +86,6 @@ export function GameScreen({ onBack }: GameScreenProps) {
 
       {/* Voting Cards */}
       <VotingCards />
-
-      {/* Quick Reactions - only show while waiting */}
-      {!roomState?.revealed && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
-          <div className="flex gap-2 bg-base-300/80 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/10">
-            {QUICK_REACTIONS.map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => sendReaction(emoji)}
-                className="text-2xl hover:scale-125 active:scale-95 transition-transform"
-                title={`React with ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
