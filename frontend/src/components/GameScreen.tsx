@@ -1,6 +1,9 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 import { PokerTable } from './PokerTable';
 import { VotingCards } from './VotingCards';
+import { LanguageSelector } from './LanguageSelector';
 
 const QUICK_REACTIONS = ['👍', '😂', '🔥', '💀', '🤔', '☕'];
 
@@ -9,12 +12,16 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ onBack }: GameScreenProps) {
+  const { t } = useTranslation();
   const { currentRoom, connected, sendReaction, roomState } = useGame();
+  const [copied, setCopied] = useState(false);
 
   const copyRoomLink = () => {
     if (currentRoom) {
       const url = `${window.location.origin}?room=${currentRoom}`;
       navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -28,8 +35,12 @@ export function GameScreen({ onBack }: GameScreenProps) {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Esci
       </button>
+
+      {/* Language selector */}
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
 
       {/* Header */}
       <div className="text-center mb-6 lg:mb-10">
@@ -42,27 +53,28 @@ export function GameScreen({ onBack }: GameScreenProps) {
             onError={(e) => e.currentTarget.style.display = 'none'}
           />
           <span className="text-xs lg:text-sm text-amber-400 font-semibold tracking-widest uppercase">
-            Team
+            {t('app.subtitle')}
           </span>
         </div>
         
         <h1 className="text-3xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-          🃏 Planning Poker
+          🃏 {t('app.title')}
         </h1>
         
-        <p className="text-xs text-amber-500/60 italic mb-2">"Sic Parvis Magna"</p>
+        <p className="text-xs text-amber-500/60 italic mb-2">"{t('app.motto')}"</p>
         
         {/* Room badge */}
         <div className="flex items-center justify-center gap-2">
           <div 
             className="badge badge-primary badge-lg gap-2 cursor-pointer hover:badge-secondary transition-colors"
             onClick={copyRoomLink}
-            title="Click to copy invite link"
+            title={t('game.copyCode')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
             </svg>
-            Room: <span className="font-mono font-bold">{currentRoom}</span>
+            {t('game.roomCode')}: <span className="font-mono font-bold">{currentRoom}</span>
+            {copied && <span className="text-green-400 text-xs">✓</span>}
           </div>
           
           {/* Connection indicator */}

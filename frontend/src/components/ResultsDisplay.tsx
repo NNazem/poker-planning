@@ -1,8 +1,10 @@
 import { useMemo, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 import confetti from 'canvas-confetti';
 
 export function ResultsDisplay() {
+  const { t } = useTranslation();
   const { roomState, newRound, setMyVote } = useGame();
 
   const { average, individualVotes, hasConsensus } = useMemo(() => {
@@ -83,7 +85,7 @@ export function ResultsDisplay() {
   if (!roomState?.revealed) {
     return (
       <div className="text-xl lg:text-2xl opacity-70 animate-pulse">
-        In attesa di voti...
+        {t('game.waiting')}
       </div>
     );
   }
@@ -95,7 +97,7 @@ export function ResultsDisplay() {
         <div className="flex items-center gap-3 mb-3">
           <div className="text-4xl">🎯</div>
           <div>
-            <div className="text-xs uppercase tracking-wider opacity-60">Media</div>
+            <div className="text-xs uppercase tracking-wider opacity-60">{t('game.average')}</div>
             <div className="text-4xl lg:text-5xl font-bold text-success">{average}</div>
           </div>
         </div>
@@ -103,7 +105,7 @@ export function ResultsDisplay() {
         {/* Individual votes */}
         <div className="w-full">
           <div className="text-xs uppercase tracking-wider opacity-60 mb-2 text-center">
-            Voti individuali
+            {t('game.votes')}
           </div>
           <div className="flex flex-wrap justify-center gap-2 max-w-xs">
             {individualVotes.map(({ name, vote, diff }) => (
@@ -130,7 +132,7 @@ export function ResultsDisplay() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Consenso!
+              {t('game.consensus')}
             </span>
           </div>
         )}
@@ -143,7 +145,7 @@ export function ResultsDisplay() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          Nuovo round
+          {t('game.newRound')}
         </button>
       </div>
     </div>

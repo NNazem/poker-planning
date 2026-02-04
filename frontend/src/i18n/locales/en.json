@@ -1,0 +1,33 @@
+{
+  "app": {
+    "title": "Planning Poker",
+    "subtitle": "Uncharted Team",
+    "motto": "Sic Parvis Magna"
+  },
+  "login": {
+    "title": "Join a Room",
+    "namePlaceholder": "Your name",
+    "roomPlaceholder": "Room code (optional)",
+    "joinButton": "Join Room",
+    "createNew": "Leave empty to create a new room"
+  },
+  "game": {
+    "roomCode": "Room Code",
+    "copyCode": "Copy",
+    "copied": "Copied!",
+    "players": "Players",
+    "yourVote": "Your Vote",
+    "selectCard": "Select a card to vote",
+    "waiting": "Waiting for votes...",
+    "reveal": "Reveal Votes",
+    "newRound": "New Round",
+    "consensus": "Consensus!",
+    "average": "Average",
+    "votes": "Votes"
+  },
+  "player": {
+    "you": "(You)",
+    "voted": "Voted",
+    "waiting": "Thinking..."
+  }
+}

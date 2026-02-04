@@ -1,0 +1,33 @@
+{
+  "app": {
+    "title": "Poker Planañ",
+    "subtitle": "Skipailh Uncharted",
+    "motto": "Sic Parvis Magna"
+  },
+  "login": {
+    "title": "Mont e-barzh ur Gambr",
+    "namePlaceholder": "Hoc'h anv",
+    "roomPlaceholder": "Kod ar gambr (diret)",
+    "joinButton": "Mont e-barzh",
+    "createNew": "Lezit goullo evit krouiñ ur gambr nevez"
+  },
+  "game": {
+    "roomCode": "Kod ar Gambr",
+    "copyCode": "Eilañ",
+    "copied": "Eilet!",
+    "players": "C'hoarierien",
+    "yourVote": "Ho Vot",
+    "selectCard": "Dibabit ur gartenn evit votiñ",
+    "waiting": "O c'hortoz ar mouezhioù...",
+    "reveal": "Diskouez ar Mouezhioù",
+    "newRound": "Tro Nevez",
+    "consensus": "Emglev!",
+    "average": "Keidenn",
+    "votes": "Mouezhioù"
+  },
+  "player": {
+    "you": "(C'hwi)",
+    "voted": "Votet",
+    "waiting": "O soñjal..."
+  }
+}

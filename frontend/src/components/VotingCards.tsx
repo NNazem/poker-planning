@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 
 const VOTES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const SPECIAL_VOTES = ['?', '☕'];
 
 export function VotingCards() {
+  const { t } = useTranslation();
   const { vote, myVote, setMyVote } = useGame();
 
   const handleVote = (value: string) => {
@@ -18,7 +20,7 @@ export function VotingCards() {
 
   return (
     <div className="text-center">
-      <h2 className="text-xl lg:text-2xl font-semibold mb-4 lg:mb-6">Scegli il tuo voto:</h2>
+      <h2 className="text-xl lg:text-2xl font-semibold mb-4 lg:mb-6">{t('game.selectCard')}</h2>
       
       {/* Number cards */}
       <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-2 lg:gap-4 max-w-4xl mx-auto px-2">
