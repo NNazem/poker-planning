@@ -3,7 +3,7 @@ import type { RoomState } from '../types';
 
 const WS_URL = import.meta.env.DEV 
   ? 'ws://localhost:3000/ws' 
-  : `ws://${window.location.host}/ws`;
+  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
 interface UseSocketReturn {
   connected: boolean;
