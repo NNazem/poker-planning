@@ -45,7 +45,7 @@ export function PokerTable() {
           {/* Waiting text in center */}
           {roomState && !roomState.revealed && (
             <div className="text-center py-3">
-              <span className="text-crt-green/70 text-sm animate-pulse font-mono">
+              <span className="text-bal-green/70 text-sm animate-pulse font-mono">
                 {t('game.waiting')}
               </span>
             </div>
@@ -94,7 +94,7 @@ export function PokerTable() {
           {/* Center: waiting text */}
           {roomState && !roomState.revealed && (
             <div className="relative z-10 text-center">
-              <div className="text-xl lg:text-2xl text-crt-green/60 animate-pulse font-mono">
+              <div className="text-xl lg:text-2xl text-bal-green/60 animate-pulse font-mono">
                 {t('game.waiting')}
               </div>
             </div>
@@ -150,19 +150,19 @@ function PlayerRow({ player, index, hasVoted, vote, revealed }: {
   };
 
   return (
-    <div className={`flex items-center gap-3 bg-black/30 rounded-xl px-3 py-2 border border-white/10 ${isPoked ? 'player-poked' : ''} ${isMe ? 'ring-1 ring-crt-green/50' : ''}`}>
+    <div className={`flex items-center gap-3 bg-bal-surface/50 rounded-xl px-3 py-2 border border-bal-surface-light/50 ${isPoked ? 'player-poked' : ''} ${isMe ? 'ring-1 ring-bal-green/50' : ''}`}>
       {/* Avatar */}
       <div
         onClick={handlePoke}
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br ${colorClass} border-2 border-white/30 shrink-0 ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br ${colorClass} border-2 border-bal-surface-light shrink-0 ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
       >
         {player.name.charAt(0).toUpperCase()}
       </div>
 
       {/* Name + reaction */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-white truncate">
-          {player.name} {isMe && <span className="text-crt-green text-xs">(you)</span>}
+        <div className="text-sm text-bal-text truncate">
+          {player.name} {isMe && <span className="text-bal-green text-xs">(you)</span>}
         </div>
       </div>
 
@@ -173,13 +173,13 @@ function PlayerRow({ player, index, hasVoted, vote, revealed }: {
         {hasVoted ? (
           <div className={`w-10 h-14 rounded-md flex items-center justify-center text-base font-bold border-2 ${
             revealed
-              ? 'bg-white text-gray-900 border-white/50 card-flip-reveal'
-              : 'card-back-pattern text-white border-crt-green/50 player-voted-pulse'
+              ? 'bg-bal-text text-bal-bg border-bal-text-dim card-flip-reveal'
+              : 'card-back-pattern text-white border-bal-green/50 player-voted-pulse'
           }`}>
             {revealed ? vote : '🃏'}
           </div>
         ) : (
-          <div className="w-10 h-14 rounded-md border-2 border-white/10 flex items-center justify-center text-white/20 text-xs">
+          <div className="w-10 h-14 rounded-md border-2 border-bal-surface-light/50 flex items-center justify-center text-bal-text-muted text-xs">
             —
           </div>
         )}

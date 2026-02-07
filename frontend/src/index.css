@@ -1,9 +1,41 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* ══════════════════════════════════════════
+   BALATRO PALETTE — Single source of truth
+   ══════════════════════════════════════════ */
 @theme {
-  --color-crt-green: #22c55e;
-  --color-crt-dark: #0d0d1a;
-  --color-retro-gold: #DAA520;
-  --color-retro-red: #ef4444;
+  /* Backgrounds — deep dark blues */
+  --color-bal-bg: #0f0f23;
+  --color-bal-bg-mid: #171733;
+  --color-bal-surface: #1e1e3a;
+  --color-bal-surface-light: #2a2a4a;
+
+  /* Primary accent — neon green (CRT) */
+  --color-bal-green: #4ade80;
+  --color-bal-green-dim: #22c55e;
+  --color-bal-green-dark: #166534;
+
+  /* Secondary accent — warm gold */
+  --color-bal-gold: #f59e0b;
+  --color-bal-gold-dim: #b57b0a;
+  --color-bal-gold-dark: #6b4c08;
+
+  /* Felt — poker table greens */
+  --color-bal-felt: #1a6b1a;
+  --color-bal-felt-light: #228B22;
+  --color-bal-felt-dark: #0e3d0e;
+
+  /* Text */
+  --color-bal-text: #e2e8f0;
+  --color-bal-text-dim: #94a3b8;
+  --color-bal-text-muted: #64748b;
+
+  /* Accent — warm red for contrast */
+  --color-bal-red: #ef4444;
+  --color-bal-red-dim: #dc2626;
+
+  /* Wood border for table */
+  --color-bal-wood: #8B5A2B;
+  --color-bal-wood-dark: #5c3a1a;
 }

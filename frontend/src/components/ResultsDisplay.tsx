@@ -71,15 +71,15 @@ export function ResultsModal() {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 results-backdrop" onClick={handleNewRound}>
       <div
-        className="crt-enter w-full max-w-lg bg-black/90 border-2 border-retro-gold/40 rounded-xl p-6 shadow-2xl"
+        className="crt-enter w-full max-w-lg bg-bal-bg/90 border-2 border-bal-gold/40 rounded-xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Average */}
         <div className="flex items-center justify-center gap-3 mb-5">
           <span className="text-4xl">🎯</span>
           <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-white/50 font-mono">{t('game.average')}</div>
-            <div className="text-5xl font-bold text-crt-green text-glow-green font-mono">{average}</div>
+            <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono">{t('game.average')}</div>
+            <div className="text-5xl font-bold text-bal-green text-glow-green font-mono">{average}</div>
           </div>
         </div>
 
@@ -94,18 +94,18 @@ export function ResultsModal() {
 
         {/* Vote distribution bar chart */}
         <div className="mb-5">
-          <div className="text-xs uppercase tracking-wider text-white/50 font-mono text-center mb-3">
+          <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono text-center mb-3">
             {t('game.votes')} ({totalVotes})
           </div>
           <div className="flex items-end justify-center gap-3 h-32">
             {distribution.map(({ value, count }) => (
               <div key={value} className="flex flex-col items-center gap-1">
-                <span className="text-xs text-white/70 font-mono">{count}</span>
+                <span className="text-xs text-bal-text-dim font-mono">{count}</span>
                 <div
                   className="vote-bar w-10 rounded-t-md min-h-[4px]"
                   style={{ height: `${(count / maxCount) * 100}px` }}
                 />
-                <span className="text-sm font-bold text-white/90 font-mono">{value}</span>
+                <span className="text-sm font-bold text-bal-text font-mono">{value}</span>
               </div>
             ))}
           </div>

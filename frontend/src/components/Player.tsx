@@ -3,12 +3,12 @@ import { useGame } from '../context/GameContext';
 import type { Player as PlayerType } from '../types';
 
 const AVATAR_COLORS = [
-  'from-purple-500 to-pink-500',
-  'from-blue-500 to-cyan-500',
-  'from-green-500 to-teal-500',
-  'from-orange-500 to-red-500',
-  'from-yellow-500 to-orange-500',
-  'from-indigo-500 to-purple-500',
+  'from-emerald-700 to-emerald-500',
+  'from-amber-700 to-amber-500',
+  'from-teal-700 to-teal-500',
+  'from-rose-800 to-rose-600',
+  'from-violet-800 to-violet-600',
+  'from-cyan-800 to-cyan-600',
 ];
 
 interface PlayerProps {
@@ -71,7 +71,7 @@ export function Player({ player, position, index, hasVoted, vote, revealed }: Pl
         onClick={handleClick}
         className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center
           text-lg lg:text-xl font-bold bg-gradient-to-br ${colorClass}
-          border-3 border-white/40 shadow-lg
+          border-3 border-bal-surface-light shadow-lg
           ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
         title={!isMe ? `Poke ${player.name}!` : ''}
       >
@@ -80,8 +80,8 @@ export function Player({ player, position, index, hasVoted, vote, revealed }: Pl
 
       {/* Name */}
       <div className={`px-2 py-1 rounded-xl text-xs lg:text-sm whitespace-nowrap
-        bg-black/80 border border-white/20
-        ${isMe ? 'ring-2 ring-crt-green ring-offset-1 ring-offset-transparent' : ''}`}>
+        bg-bal-bg/80 border border-bal-surface-light
+        ${isMe ? 'ring-2 ring-bal-green ring-offset-1 ring-offset-transparent' : ''}`}>
         {player.name}
       </div>
 
@@ -90,8 +90,8 @@ export function Player({ player, position, index, hasVoted, vote, revealed }: Pl
         <div className={`w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
           text-lg lg:text-xl font-bold shadow-lg border-2
           ${revealed
-            ? 'bg-white text-gray-900 border-white/50 card-flip-reveal'
-            : 'card-back-pattern text-white border-crt-green/50 player-voted-pulse'}`}
+            ? 'bg-bal-text text-bal-bg border-bal-text-dim card-flip-reveal'
+            : 'card-back-pattern text-white border-bal-green/50 player-voted-pulse'}`}
         >
           {revealed ? vote : '🃏'}
         </div>
