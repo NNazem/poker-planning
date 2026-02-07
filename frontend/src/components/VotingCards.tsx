@@ -1,7 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 
-const ALL_VOTES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '?', '☕'];
+const ALL_VOTES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+
+// Suit symbols for decoration
+const SUITS = ['♠', '♥', '♦', '♣'];
+
+function getSuit(index: number) {
+  return SUITS[index % SUITS.length];
+}
+
+function getSuitColor(index: number) {
+  const suit = SUITS[index % SUITS.length];
+  return suit === '♥' || suit === '♦' ? 'text-red-500' : 'text-white/90';
+}
 
 export function VotingCards() {
   const { t } = useTranslation();
@@ -21,30 +33,48 @@ export function VotingCards() {
         {t('game.selectCard')}
       </h2>
 
-      {/* All cards in one grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-6 lg:grid-cols-12 gap-2 lg:gap-3 max-w-4xl mx-auto px-2">
-        {ALL_VOTES.map((value, index) => (
-          <button
-            key={value}
-            className={`retro-card vote-card-enter cursor-pointer flex flex-col items-center justify-center
-              text-2xl sm:text-3xl lg:text-3xl font-bold aspect-[5/7] relative
-              ${myVote === value ? 'selected' : ''}`}
-            style={{ animationDelay: `${index * 0.03}s` }}
-            onClick={() => handleVote(value)}
-          >
-            <span className={myVote === value ? 'text-crt-green' : 'text-white/90'}>
-              {value}
-            </span>
-            {/* Checkmark for selected */}
-            {myVote === value && (
-              <div className="absolute top-1 right-1 w-5 h-5 bg-crt-green rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+      <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-2 lg:gap-3 max-w-4xl mx-auto px-2">
+        {ALL_VOTES.map((value, index) => {
+          const selected = myVote === value;
+          const suit = getSuit(index);
+          const suitColor = getSuitColor(index);
+
+          return (
+            <button
+              key={value}
+              className={`playing-card vote-card-enter cursor-pointer relative aspect-[5/7]
+                ${selected ? 'playing-card-selected' : ''}`}
+              style={{ animationDelay: `${index * 0.04}s` }}
+              onClick={() => handleVote(value)}
+            >
+              {/* Top-left corner */}
+              <div className={`absolute top-1.5 left-1.5 lg:top-2 lg:left-2 flex flex-col items-center leading-none ${selected ? 'text-crt-green' : suitColor}`}>
+                <span className="text-xs lg:text-sm font-bold">{value}</span>
+                <span className="text-[10px] lg:text-xs">{suit}</span>
               </div>
-            )}
-          </button>
-        ))}
+
+              {/* Center value */}
+              <div className={`absolute inset-0 flex items-center justify-center ${selected ? 'text-crt-green' : suitColor}`}>
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold">{value}</span>
+              </div>
+
+              {/* Bottom-right corner (rotated) */}
+              <div className={`absolute bottom-1.5 right-1.5 lg:bottom-2 lg:right-2 flex flex-col items-center leading-none rotate-180 ${selected ? 'text-crt-green' : suitColor}`}>
+                <span className="text-xs lg:text-sm font-bold">{value}</span>
+                <span className="text-[10px] lg:text-xs">{suit}</span>
+              </div>
+
+              {/* Checkmark for selected */}
+              {selected && (
+                <div className="absolute top-1 right-1 w-5 h-5 bg-crt-green rounded-full flex items-center justify-center z-10">
+                  <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
