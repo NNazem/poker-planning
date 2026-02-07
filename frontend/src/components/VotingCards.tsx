@@ -12,7 +12,8 @@ function getSuit(index: number) {
 
 function getSuitColor(index: number) {
   const suit = SUITS[index % SUITS.length];
-  return suit === '♥' || suit === '♦' ? 'text-red-500' : 'text-white/90';
+  // Gold for red suits, cream for black — all retro themed
+  return suit === '♥' || suit === '♦' ? 'text-[#DAA520]' : 'text-[#f0e6d3]';
 }
 
 export function VotingCards() {

@@ -1,5 +1,21 @@
 /* Balatro-inspired CRT/Retro Aesthetic */
 
+/* Shared card colors */
+:root {
+  --card-bg: #1a1a2e;
+  --card-bg-end: #16213e;
+  --card-border: #DAA520;
+  --card-border-dim: #8B6914;
+  --card-glow: rgba(218, 165, 32, 0.25);
+  --card-selected-bg: #0a1f0a;
+  --card-selected-bg-end: #143214;
+  --card-selected-border: #22c55e;
+  --card-selected-glow: rgba(34, 197, 94, 0.5);
+  --card-text: #f0e6d3;
+  --card-text-accent: #DAA520;
+  --card-inner-border: rgba(218, 165, 32, 0.15);
+}
+
 /* CRT Scanline overlay */
 .crt-overlay {
   pointer-events: none;
@@ -98,40 +114,53 @@
   background: linear-gradient(145deg, #0f2e0f 0%, #1a3d1a 100%);
 }
 
-/* Playing card style - like real poker cards */
+/* Playing card style - dark retro CRT */
 .playing-card {
-  background: linear-gradient(145deg, #f5f0e8 0%, #e8e0d0 50%, #ddd5c5 100%);
-  border: 2px solid #999;
+  background: linear-gradient(145deg, var(--card-bg) 0%, var(--card-bg-end) 100%);
+  border: 2px solid var(--card-border-dim);
   border-radius: 10px;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    0 0 8px var(--card-glow);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   position: relative;
   overflow: hidden;
 }
 
-/* Subtle card texture */
+/* Inner border accent */
 .playing-card::before {
   content: '';
   position: absolute;
   inset: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--card-inner-border);
   border-radius: 7px;
   pointer-events: none;
   z-index: 1;
 }
 
+/* Subtle crosshatch texture on cards */
+.playing-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(218, 165, 32, 0.03) 4px, rgba(218, 165, 32, 0.03) 5px),
+    repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(218, 165, 32, 0.03) 4px, rgba(218, 165, 32, 0.03) 5px);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .playing-card:hover {
   transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6), 0 0 15px rgba(218, 165, 32, 0.2);
-  border-color: #DAA520;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7), 0 0 20px var(--card-glow);
+  border-color: var(--card-border);
 }
 
 .playing-card-selected {
-  background: linear-gradient(145deg, #0a1f0a 0%, #0f2e0f 50%, #1a3d1a 100%);
-  border-color: #22c55e;
-  box-shadow: 0 0 25px rgba(34, 197, 94, 0.5), 0 8px 24px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(145deg, var(--card-selected-bg) 0%, var(--card-selected-bg-end) 100%);
+  border-color: var(--card-selected-border);
+  box-shadow: 0 0 25px var(--card-selected-glow), 0 8px 24px rgba(0, 0, 0, 0.5);
   transform: translateY(-10px) scale(1.05);
 }
 
@@ -139,12 +168,19 @@
   border-color: rgba(34, 197, 94, 0.2);
 }
 
-/* Card back pattern */
+.playing-card-selected::after {
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(34, 197, 94, 0.04) 4px, rgba(34, 197, 94, 0.04) 5px),
+    repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(34, 197, 94, 0.04) 4px, rgba(34, 197, 94, 0.04) 5px);
+}
+
+/* Card back pattern - uses shared card vars */
 .card-back-pattern {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(218, 165, 32, 0.08) 3px, rgba(218, 165, 32, 0.08) 4px),
-    repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(218, 165, 32, 0.08) 3px, rgba(218, 165, 32, 0.08) 4px),
-    linear-gradient(145deg, #22c55e 0%, #16a34a 100%);
+    repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(218, 165, 32, 0.1) 3px, rgba(218, 165, 32, 0.1) 4px),
+    repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(218, 165, 32, 0.1) 3px, rgba(218, 165, 32, 0.1) 4px),
+    linear-gradient(145deg, var(--card-bg) 0%, var(--card-bg-end) 100%);
+  border-color: var(--card-border-dim) !important;
 }
 
 /* Vote card deal animation */
