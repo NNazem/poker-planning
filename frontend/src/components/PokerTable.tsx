@@ -5,19 +5,35 @@ import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
 import type { Player as PlayerType } from '../types';
 
 // Fixed seat positions (percentage-based) — Zynga Poker style
-// 10 seats evenly distributed around an elliptical table
+// cardDir: where the vote card goes relative to the avatar (toward table center)
 const ALL_SEATS = [
-  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)' },       // 0: top center
-  { top: '8%',  left: '78%',  transform: 'translate(-50%, 0)' },       // 1: top right
-  { top: '40%', left: '95%',  transform: 'translate(-50%, -50%)' },    // 2: right
-  { top: '75%', left: '82%',  transform: 'translate(-50%, -50%)' },    // 3: bottom right
-  { top: '92%', left: '62%',  transform: 'translate(-50%, -50%)' },    // 4: bottom right-center
-  { top: '92%', left: '38%',  transform: 'translate(-50%, -50%)' },    // 5: bottom left-center
-  { top: '75%', left: '18%',  transform: 'translate(-50%, -50%)' },    // 6: bottom left
-  { top: '40%', left: '5%',   transform: 'translate(-50%, -50%)' },    // 7: left
-  { top: '8%',  left: '22%',  transform: 'translate(-50%, 0)' },       // 8: top left
-  { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },    // 9: center (overflow)
+  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)',    cardDir: 'below' as const },    // 0: top center
+  { top: '8%',  left: '78%',  transform: 'translate(-50%, 0)',    cardDir: 'below-left' as const },// 1: top right
+  { top: '40%', left: '95%',  transform: 'translate(-50%, -50%)', cardDir: 'left' as const },      // 2: right
+  { top: '75%', left: '82%',  transform: 'translate(-50%, -50%)', cardDir: 'above-left' as const },// 3: bottom right
+  { top: '92%', left: '62%',  transform: 'translate(-50%, -50%)', cardDir: 'above' as const },     // 4: bottom right-center
+  { top: '92%', left: '38%',  transform: 'translate(-50%, -50%)', cardDir: 'above' as const },     // 5: bottom left-center
+  { top: '75%', left: '18%',  transform: 'translate(-50%, -50%)', cardDir: 'above-right' as const },// 6: bottom left
+  { top: '40%', left: '5%',   transform: 'translate(-50%, -50%)', cardDir: 'right' as const },     // 7: left
+  { top: '8%',  left: '22%',  transform: 'translate(-50%, 0)',    cardDir: 'below-right' as const },// 8: top left
+  { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)', cardDir: 'below' as const },     // 9: center (overflow)
 ];
+
+type CardDir = 'above' | 'below' | 'left' | 'right' | 'above-left' | 'above-right' | 'below-left' | 'below-right';
+
+// CSS classes to position the vote card toward table center
+function getCardPositionClass(dir: CardDir): string {
+  switch (dir) {
+    case 'below':       return 'top-full left-1/2 -translate-x-1/2 mt-1';
+    case 'above':       return 'bottom-full left-1/2 -translate-x-1/2 mb-1';
+    case 'left':        return 'right-full top-1/2 -translate-y-1/2 mr-2';
+    case 'right':       return 'left-full top-1/2 -translate-y-1/2 ml-2';
+    case 'below-left':  return 'top-full right-0 mt-1';
+    case 'below-right': return 'top-full left-0 mt-1';
+    case 'above-left':  return 'bottom-full right-0 mb-1';
+    case 'above-right': return 'bottom-full left-0 mb-1';
+  }
+}
 
 // Pick evenly spaced seats for N players around the table
 function getEvenlySpacedSeats(playerCount: number): number[] {
@@ -121,6 +137,7 @@ export function PokerTable() {
                     hasVoted={roomState!.votes[player.id] !== undefined}
                     vote={roomState!.votes[player.id]}
                     revealed={roomState!.revealed}
+                    cardDir={pos.cardDir}
                   />
                 ) : (
                   <EmptySeat />
@@ -156,12 +173,13 @@ function EmptySeat() {
 }
 
 /* ── Desktop Seat Player ── */
-function SeatPlayer({ player, index, hasVoted, vote, revealed }: {
+function SeatPlayer({ player, index, hasVoted, vote, revealed, cardDir = 'below' }: {
   player: PlayerType;
   index: number;
   hasVoted: boolean;
   vote?: string;
   revealed: boolean;
+  cardDir?: CardDir;
 }) {
   const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
@@ -184,8 +202,10 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed }: {
     }
   }, [reactionEvent, player.id]);
 
+  const cardPosClass = getCardPositionClass(cardDir);
+
   return (
-    <div className={`flex flex-col items-center gap-1 ${isPoked ? 'player-poked' : ''}`}>
+    <div className={`relative flex flex-col items-center gap-1 ${isPoked ? 'player-poked' : ''}`}>
       {/* Floating reaction */}
       {showReaction && (
         <div className="reaction-float" style={{ top: '-20px', left: '50%', transform: 'translateX(-50%)' }}>
@@ -212,10 +232,10 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed }: {
         {player.name}
       </div>
 
-      {/* Vote card */}
+      {/* Vote card — positioned toward table center */}
       {hasVoted && (
-        <div className={`w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
-          text-lg lg:text-xl font-bold shadow-lg border-2
+        <div className={`absolute ${cardPosClass} w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
+          text-lg lg:text-xl font-bold shadow-lg border-2 z-20
           ${revealed
             ? 'bg-bal-text text-bal-bg border-bal-text-dim card-flip-reveal'
             : 'card-back-pattern text-white border-bal-gold-dim player-voted-pulse'}`}
