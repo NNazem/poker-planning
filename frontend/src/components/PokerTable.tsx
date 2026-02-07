@@ -4,47 +4,45 @@ import { useGame } from '../context/GameContext';
 import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
 import type { Player as PlayerType } from '../types';
 
-// Fixed seat positions (percentage-based) — Zynga Poker style
-// cardDir: where the vote card goes relative to the avatar (toward table center)
-const ALL_SEATS = [
-  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)',    cardDir: 'below' as const },    // 0: top center
-  { top: '8%',  left: '78%',  transform: 'translate(-50%, 0)',    cardDir: 'below-left' as const },// 1: top right
-  { top: '40%', left: '95%',  transform: 'translate(-50%, -50%)', cardDir: 'left' as const },      // 2: right
-  { top: '75%', left: '82%',  transform: 'translate(-50%, -50%)', cardDir: 'above-left' as const },// 3: bottom right
-  { top: '92%', left: '62%',  transform: 'translate(-50%, -50%)', cardDir: 'above' as const },     // 4: bottom right-center
-  { top: '92%', left: '38%',  transform: 'translate(-50%, -50%)', cardDir: 'above' as const },     // 5: bottom left-center
-  { top: '75%', left: '18%',  transform: 'translate(-50%, -50%)', cardDir: 'above-right' as const },// 6: bottom left
-  { top: '40%', left: '5%',   transform: 'translate(-50%, -50%)', cardDir: 'right' as const },     // 7: left
-  { top: '8%',  left: '22%',  transform: 'translate(-50%, 0)',    cardDir: 'below-right' as const },// 8: top left
-  { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)', cardDir: 'below' as const },     // 9: center (overflow)
+// Table center in percentage
+const TABLE_CENTER = { x: 50, y: 50 };
+
+// 10 fixed seat positions around the table (percentage-based)
+const FIXED_SEATS = [
+  { x: 50, y: 3  },   // 0: top center
+  { x: 80, y: 10 },   // 1: top right
+  { x: 95, y: 42 },   // 2: right
+  { x: 82, y: 76 },   // 3: bottom right
+  { x: 62, y: 92 },   // 4: bottom right-center
+  { x: 38, y: 92 },   // 5: bottom left-center
+  { x: 18, y: 76 },   // 6: bottom left
+  { x: 5,  y: 42 },   // 7: left
+  { x: 20, y: 10 },   // 8: top left
+  { x: 50, y: 50 },   // 9: overflow fallback
 ];
 
-type CardDir = 'above' | 'below' | 'left' | 'right' | 'above-left' | 'above-right' | 'below-left' | 'below-right';
-
-// CSS classes to position the vote card toward table center
-function getCardPositionClass(dir: CardDir): string {
-  switch (dir) {
-    case 'below':       return 'top-full left-1/2 -translate-x-1/2 mt-1';
-    case 'above':       return 'bottom-full left-1/2 -translate-x-1/2 mb-1';
-    case 'left':        return 'right-full top-1/2 -translate-y-1/2 mr-2';
-    case 'right':       return 'left-full top-1/2 -translate-y-1/2 ml-2';
-    case 'below-left':  return 'top-full right-0 mt-1';
-    case 'below-right': return 'top-full left-0 mt-1';
-    case 'above-left':  return 'bottom-full right-0 mb-1';
-    case 'above-right': return 'bottom-full left-0 mb-1';
-  }
-}
-
-// Pick evenly spaced seats for N players around the table
-function getEvenlySpacedSeats(playerCount: number): number[] {
-  const totalSeats = Math.min(playerCount, 9); // max 9 around the edge
-  if (totalSeats <= 0) return [];
-  // Distribute evenly across 9 positions (indices 0-8)
+// Pick N evenly-spaced seats from the 9 edge positions
+function pickSeats(count: number): number[] {
+  const n = Math.min(count, 9);
+  if (n <= 0) return [];
   const indices: number[] = [];
-  for (let i = 0; i < totalSeats; i++) {
-    indices.push(Math.round((i * 9) / totalSeats) % 9);
+  const step = 9 / n;
+  for (let i = 0; i < n; i++) {
+    indices.push(Math.floor(i * step) % 9);
   }
   return indices;
+}
+
+// Calculate card offset (in px) pointing from seat toward table center
+// Returns { dx, dy } to translate the card
+function getCardOffset(seatX: number, seatY: number): { dx: number; dy: number } {
+  const dirX = TABLE_CENTER.x - seatX;
+  const dirY = TABLE_CENTER.y - seatY;
+  const len = Math.sqrt(dirX * dirX + dirY * dirY);
+  if (len === 0) return { dx: 0, dy: 0 };
+  // Normalize and scale — push card ~55px toward center
+  const scale = 55 / len;
+  return { dx: dirX * scale, dy: dirY * scale };
 }
 
 const AVATAR_COLORS = [
@@ -73,7 +71,7 @@ export function PokerTable() {
   }, []);
 
   const players = roomState?.players ?? [];
-  const seatIndices = getEvenlySpacedSeats(Math.max(players.length, 6));
+  const seatIndices = pickSeats(Math.max(players.length, 6));
 
   // Mobile: vertical list
   if (isMobile) {
@@ -122,13 +120,18 @@ export function PokerTable() {
           
           {/* Fixed seats — evenly distributed */}
           {seatIndices.map((seatIdx, i) => {
-            const pos = ALL_SEATS[seatIdx];
+            const seat = FIXED_SEATS[seatIdx];
             const player = players[i];
+            const cardOffset = getCardOffset(seat.x, seat.y);
             return (
               <div
                 key={i}
                 className="absolute"
-                style={{ top: pos.top, left: pos.left, transform: pos.transform }}
+                style={{
+                  top: `${seat.y}%`,
+                  left: `${seat.x}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
               >
                 {player ? (
                   <SeatPlayer
@@ -137,7 +140,7 @@ export function PokerTable() {
                     hasVoted={roomState!.votes[player.id] !== undefined}
                     vote={roomState!.votes[player.id]}
                     revealed={roomState!.revealed}
-                    cardDir={pos.cardDir}
+                    cardOffset={cardOffset}
                   />
                 ) : (
                   <EmptySeat />
@@ -173,13 +176,13 @@ function EmptySeat() {
 }
 
 /* ── Desktop Seat Player ── */
-function SeatPlayer({ player, index, hasVoted, vote, revealed, cardDir = 'below' }: {
+function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx: 0, dy: 55 } }: {
   player: PlayerType;
   index: number;
   hasVoted: boolean;
   vote?: string;
   revealed: boolean;
-  cardDir?: CardDir;
+  cardOffset?: { dx: number; dy: number };
 }) {
   const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
@@ -201,8 +204,6 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardDir = 'below'
       setTimeout(() => setShowReaction(null), 2000);
     }
   }, [reactionEvent, player.id]);
-
-  const cardPosClass = getCardPositionClass(cardDir);
 
   return (
     <div className={`relative flex flex-col items-center gap-1 ${isPoked ? 'player-poked' : ''}`}>
@@ -234,11 +235,17 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardDir = 'below'
 
       {/* Vote card — positioned toward table center */}
       {hasVoted && (
-        <div className={`absolute ${cardPosClass} w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
-          text-lg lg:text-xl font-bold shadow-lg border-2 z-20
-          ${revealed
-            ? 'bg-bal-text text-bal-bg border-bal-text-dim card-flip-reveal'
-            : 'card-back-pattern text-white border-bal-gold-dim player-voted-pulse'}`}
+        <div
+          className={`absolute w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
+            text-lg lg:text-xl font-bold shadow-lg border-2 z-20
+            ${revealed
+              ? 'bg-bal-text text-bal-bg border-bal-text-dim card-flip-reveal'
+              : 'card-back-pattern text-white border-bal-gold-dim player-voted-pulse'}`}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: `translate(calc(-50% + ${cardOffset.dx}px), calc(-50% + ${cardOffset.dy}px))`,
+          }}
         >
           {revealed ? vote : '🃏'}
         </div>
