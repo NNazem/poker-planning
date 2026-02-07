@@ -5,19 +5,31 @@ import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
 import type { Player as PlayerType } from '../types';
 
 // Fixed seat positions (percentage-based) — Zynga Poker style
-// 10 seats around an elliptical table
-const SEAT_POSITIONS = [
-  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)' },       // top center
-  { top: '8%',  left: '80%',  transform: 'translate(-50%, 0)' },       // top right
-  { top: '40%', left: '95%',  transform: 'translate(-50%, -50%)' },    // right
-  { top: '75%', left: '82%',  transform: 'translate(-50%, -50%)' },    // bottom right
-  { top: '90%', left: '62%',  transform: 'translate(-50%, -50%)' },    // bottom right-center
-  { top: '90%', left: '38%',  transform: 'translate(-50%, -50%)' },    // bottom left-center
-  { top: '75%', left: '18%',  transform: 'translate(-50%, -50%)' },    // bottom left
-  { top: '40%', left: '5%',   transform: 'translate(-50%, -50%)' },    // left
-  { top: '8%',  left: '20%',  transform: 'translate(-50%, 0)' },       // top left
-  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)' },       // overflow (wraps)
+// 10 seats evenly distributed around an elliptical table
+const ALL_SEATS = [
+  { top: '2%',  left: '50%',  transform: 'translate(-50%, 0)' },       // 0: top center
+  { top: '8%',  left: '78%',  transform: 'translate(-50%, 0)' },       // 1: top right
+  { top: '40%', left: '95%',  transform: 'translate(-50%, -50%)' },    // 2: right
+  { top: '75%', left: '82%',  transform: 'translate(-50%, -50%)' },    // 3: bottom right
+  { top: '92%', left: '62%',  transform: 'translate(-50%, -50%)' },    // 4: bottom right-center
+  { top: '92%', left: '38%',  transform: 'translate(-50%, -50%)' },    // 5: bottom left-center
+  { top: '75%', left: '18%',  transform: 'translate(-50%, -50%)' },    // 6: bottom left
+  { top: '40%', left: '5%',   transform: 'translate(-50%, -50%)' },    // 7: left
+  { top: '8%',  left: '22%',  transform: 'translate(-50%, 0)' },       // 8: top left
+  { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },    // 9: center (overflow)
 ];
+
+// Pick evenly spaced seats for N players around the table
+function getEvenlySpacedSeats(playerCount: number): number[] {
+  const totalSeats = Math.min(playerCount, 9); // max 9 around the edge
+  if (totalSeats <= 0) return [];
+  // Distribute evenly across 9 positions (indices 0-8)
+  const indices: number[] = [];
+  for (let i = 0; i < totalSeats; i++) {
+    indices.push(Math.round((i * 9) / totalSeats) % 9);
+  }
+  return indices;
+}
 
 const AVATAR_COLORS = [
   'from-emerald-700 to-emerald-500',
@@ -45,8 +57,7 @@ export function PokerTable() {
   }, []);
 
   const players = roomState?.players ?? [];
-  const maxSeats = Math.max(players.length, 6); // Show at least 6 seats
-  const seats = SEAT_POSITIONS.slice(0, Math.min(maxSeats, 10));
+  const seatIndices = getEvenlySpacedSeats(Math.max(players.length, 6));
 
   // Mobile: vertical list
   if (isMobile) {
@@ -93,19 +104,20 @@ export function PokerTable() {
       <div className="relative w-full max-w-4xl" style={{ aspectRatio: '16/10' }}>
         <div className="poker-table-balatro absolute inset-0 rounded-full lg:rounded-[200px] flex items-center justify-center">
           
-          {/* Fixed seats */}
-          {seats.map((pos, seatIndex) => {
-            const player = players[seatIndex];
+          {/* Fixed seats — evenly distributed */}
+          {seatIndices.map((seatIdx, i) => {
+            const pos = ALL_SEATS[seatIdx];
+            const player = players[i];
             return (
               <div
-                key={seatIndex}
+                key={i}
                 className="absolute"
                 style={{ top: pos.top, left: pos.left, transform: pos.transform }}
               >
                 {player ? (
                   <SeatPlayer
                     player={player}
-                    index={seatIndex}
+                    index={i}
                     hasVoted={roomState!.votes[player.id] !== undefined}
                     vote={roomState!.votes[player.id]}
                     revealed={roomState!.revealed}
