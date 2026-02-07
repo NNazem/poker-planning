@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { GameProvider } from './context/GameContext';
 import { LoginScreen } from './components/LoginScreen';
 import { GameScreen } from './components/GameScreen';
+import './App.css';
 
-// Get room from URL
 function getRoomFromURL(): string | null {
   const params = new URLSearchParams(window.location.search);
   return params.get('room');
 }
 
-// Set room in URL
 function setRoomInURL(roomId: string | null) {
   const url = new URL(window.location.href);
   if (roomId) {
@@ -24,7 +23,6 @@ function App() {
   const [inGame, setInGame] = useState(false);
   const [initialRoom, setInitialRoom] = useState<string | null>(null);
 
-  // Check URL for room on load
   useEffect(() => {
     const roomFromURL = getRoomFromURL();
     if (roomFromURL) {
@@ -44,11 +42,17 @@ function App() {
 
   return (
     <GameProvider>
-      {inGame ? (
-        <GameScreen onBack={handleBack} />
-      ) : (
-        <LoginScreen onJoin={handleJoin} initialRoom={initialRoom} />
-      )}
+      {/* CRT effects */}
+      <div className="crt-overlay" />
+      <div className="crt-vignette" />
+      
+      <div className="crt-screen">
+        {inGame ? (
+          <GameScreen onBack={handleBack} />
+        ) : (
+          <LoginScreen onJoin={handleJoin} initialRoom={initialRoom} />
+        )}
+      </div>
     </GameProvider>
   );
 }

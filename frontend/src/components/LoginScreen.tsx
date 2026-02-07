@@ -14,7 +14,6 @@ export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
 
-  // Set initial room from URL
   useEffect(() => {
     if (initialRoom) {
       setRoomId(initialRoom);
@@ -26,67 +25,68 @@ export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
       alert(t('login.namePlaceholder') + '!');
       return;
     }
-    
     const finalRoomId = roomId.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
     joinRoom(finalRoomId, playerName.trim());
     onJoin(finalRoomId);
   };
 
-  const handleKeyPress = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') handleJoin();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-primary">
-      <div className="card w-full max-w-md bg-base-300/50 backdrop-blur-md shadow-2xl border border-white/10">
-        <div className="card-body items-center text-center">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-balatro">
+      <div className="crt-enter w-full max-w-md">
+        <div className="rounded-xl border-2 border-retro-gold/30 bg-black/60 backdrop-blur-sm shadow-2xl p-6 md:p-8">
           {/* Language Selector */}
-          <LanguageSelector />
-          
-          {/* Uncharted Logo */}
-          <div className="flex items-center gap-2 mb-2">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Uncharted_logo.svg/200px-Uncharted_logo.svg.png" 
-              alt="Uncharted" 
-              className="h-8 opacity-80"
-              onError={(e) => e.currentTarget.style.display = 'none'}
-            />
-            <span className="text-xs text-amber-400 font-semibold tracking-widest uppercase">{t('app.subtitle')}</span>
+          <div className="mb-4">
+            <LanguageSelector />
           </div>
-          
-          <div className="text-6xl mb-4 animate-bounce">🃏</div>
-          <h1 className="card-title text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+
+          {/* Team branding */}
+          <div className="text-center mb-2">
+            <span className="text-xs text-retro-gold font-semibold tracking-[0.2em] uppercase">
+              {t('app.subtitle')}
+            </span>
+          </div>
+
+          <div className="text-center text-6xl mb-4">🃏</div>
+
+          <h1 className="text-center text-4xl font-bold mb-2 text-glow-green text-crt-green font-mono">
             {t('app.title')}
           </h1>
-          <p className="text-xs text-amber-500/60 italic mb-6">"{t('app.motto')}"</p>
-          
+
+          <p className="text-center text-xs text-retro-gold/60 italic mb-6">"{t('app.motto')}"</p>
+
           {/* Connection status */}
-          <div className={`badge ${connected ? 'badge-success' : 'badge-error'} gap-1 mb-4`}>
-            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
-            {connected ? '✓' : '...'}
+          <div className="flex justify-center mb-4">
+            <div className={`badge ${connected ? 'badge-success' : 'badge-error'} gap-1`}>
+              <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
+              {connected ? '✓' : '...'}
+            </div>
           </div>
-          
-          <div className="form-control w-full gap-3">
-            <input 
-              type="text" 
-              placeholder={t('login.namePlaceholder')} 
-              className="input input-bordered input-primary w-full text-lg"
+
+          <div className="flex flex-col gap-3">
+            <input
+              type="text"
+              placeholder={t('login.namePlaceholder')}
+              className="input input-bordered input-success w-full text-lg bg-black/50 border-crt-green/40 text-white placeholder:text-white/30"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               autoFocus
             />
-            <input 
-              type="text" 
-              placeholder={t('login.roomPlaceholder')} 
-              className="input input-bordered w-full"
+            <input
+              type="text"
+              placeholder={t('login.roomPlaceholder')}
+              className="input input-bordered w-full bg-black/50 border-white/20 text-white placeholder:text-white/30"
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
             />
-            <p className="text-xs opacity-50">{t('login.createNew')}</p>
-            <button 
-              className="btn btn-primary btn-lg w-full gap-2"
+            <p className="text-xs opacity-50 text-center">{t('login.createNew')}</p>
+            <button
+              className="btn btn-success btn-lg w-full gap-2 uppercase tracking-wider font-bold border-2 border-crt-green"
               onClick={handleJoin}
               disabled={!connected}
             >
