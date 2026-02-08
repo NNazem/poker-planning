@@ -12,14 +12,39 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('join-room', ({ roomId, playerName }) => {
+    // First, remove this socket from any room it was previously in
+    for (let rid in rooms) {
+      const idx = rooms[rid].players.findIndex(p => p.id === socket.id);
+      if (idx !== -1) {
+        rooms[rid].players.splice(idx, 1);
+        delete rooms[rid].votes[socket.id];
+        if (rooms[rid].players.length === 0) {
+          delete rooms[rid];
+        } else {
+          io.to(rid).emit('room-update', rooms[rid]);
+        }
+        socket.leave(rid);
+      }
+    }
+
     socket.join(roomId);
     
     if (!rooms[roomId]) {
       rooms[roomId] = { players: [], votes: {}, revealed: false };
     }
 
-    const player = { id: socket.id, name: playerName };
-    rooms[roomId].players.push(player);
+    // Check if player with same name already exists (reconnect case)
+    const existing = rooms[roomId].players.find(p => p.name === playerName);
+    if (existing) {
+      const oldVote = rooms[roomId].votes[existing.id];
+      if (oldVote !== undefined) {
+        rooms[roomId].votes[socket.id] = oldVote;
+        delete rooms[roomId].votes[existing.id];
+      }
+      existing.id = socket.id;
+    } else {
+      rooms[roomId].players.push({ id: socket.id, name: playerName });
+    }
     
     io.to(roomId).emit('room-update', rooms[roomId]);
     console.log(`${playerName} joined room ${roomId}`);

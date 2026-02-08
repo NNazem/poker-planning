@@ -1,43 +1,99 @@
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 import confetti from 'canvas-confetti';
 
+function VoteRow({ name, pVote, color, isMe, colorClasses, onChangeVote, onDirectVote, voteOptions }: {
+  name: string; pVote: string; color: 'green' | 'yellow' | 'red'; isMe: boolean;
+  colorClasses: Record<string, string>;
+  onChangeVote: (dir: 'up' | 'down') => void;
+  onDirectVote: (v: string) => void;
+  voteOptions: string[];
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (isMe && editing) {
+    return (
+      <div className={`flex items-center justify-between px-4 py-2 rounded-lg border ${colorClasses[color]} font-mono`}>
+        <span className="text-sm text-bal-text">{name} (tu)</span>
+        <div className="flex items-center gap-1 flex-wrap justify-end">
+          {voteOptions.map(v => (
+            <button
+              key={v}
+              className={`w-8 h-8 rounded text-sm font-bold transition-all ${v === pVote ? 'bg-bal-green text-bal-bg scale-110' : 'bg-bal-surface border border-bal-text-muted/30 text-bal-text hover:bg-bal-surface-light'}`}
+              onClick={(e) => { e.stopPropagation(); onDirectVote(v); setEditing(false); }}
+            >{v}</button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center justify-between px-4 py-2 rounded-lg border ${colorClasses[color]} font-mono`}>
+      <span className="text-sm text-bal-text">{name} {isMe ? '(tu)' : ''}</span>
+      <div className="flex items-center gap-2">
+        {isMe && (
+          <button
+            className="w-7 h-7 rounded-full bg-bal-surface border border-bal-text-muted/30 text-bal-text font-bold text-sm hover:bg-bal-surface-light active:scale-95 transition-transform"
+            onClick={(e) => { e.stopPropagation(); onChangeVote('down'); }}
+          >−</button>
+        )}
+        <span
+          className={`text-xl font-bold min-w-[2ch] text-center ${isMe ? 'cursor-pointer hover:underline' : ''}`}
+          onClick={(e) => { if (isMe) { e.stopPropagation(); setEditing(true); } }}
+        >{pVote}</span>
+        {isMe && (
+          <button
+            className="w-7 h-7 rounded-full bg-bal-surface border border-bal-text-muted/30 text-bal-text font-bold text-sm hover:bg-bal-surface-light active:scale-95 transition-transform"
+            onClick={(e) => { e.stopPropagation(); onChangeVote('up'); }}
+          >+</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ResultsModal() {
   const { t } = useTranslation();
-  const { roomState, newRound, setMyVote } = useGame();
+  const { roomState, newRound, setMyVote, vote, currentPlayer } = useGame();
 
-  const { average, distribution, hasConsensus } = useMemo(() => {
-    if (!roomState) return { average: 'N/A', distribution: [], hasConsensus: false };
+  const { average, playerVotes, hasConsensus } = useMemo(() => {
+    if (!roomState) return { average: 'N/A', playerVotes: [], hasConsensus: false };
 
     const numericVotes = Object.values(roomState.votes)
       .map(v => parseFloat(v))
       .filter(v => !isNaN(v));
 
     const avg = numericVotes.length > 0
-      ? (numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length).toFixed(1)
-      : 'N/A';
+      ? numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
+      : 0;
 
-    // Build distribution
-    const counts: Record<string, number> = {};
-    Object.values(roomState.votes).forEach(v => {
-      counts[v] = (counts[v] || 0) + 1;
-    });
+    const avgStr = numericVotes.length > 0 ? avg.toFixed(1) : 'N/A';
 
-    const dist = Object.entries(counts)
-      .map(([value, count]) => ({ value, count }))
+    // Build per-player vote list
+    const pVotes = roomState.players
+      .filter(p => roomState.votes[p.id] !== undefined)
+      .map(p => {
+        const vote = roomState.votes[p.id];
+        const numVote = parseFloat(vote);
+        const diff = !isNaN(numVote) ? Math.abs(numVote - avg) : 0;
+        // Color: green if within 1 of avg, yellow if within 2, red if further
+        let color: 'green' | 'yellow' | 'red' = 'green';
+        if (diff > 2) color = 'red';
+        else if (diff > 1) color = 'yellow';
+        return { name: p.name, vote, color };
+      })
       .sort((a, b) => {
-        const na = parseFloat(a.value), nb = parseFloat(b.value);
+        const na = parseFloat(a.vote), nb = parseFloat(b.vote);
         if (!isNaN(na) && !isNaN(nb)) return na - nb;
-        if (!isNaN(na)) return -1;
-        if (!isNaN(nb)) return 1;
-        return a.value.localeCompare(b.value);
+        return 0;
       });
 
     const uniqueNumeric = [...new Set(numericVotes)];
     const consensus = uniqueNumeric.length === 1 && numericVotes.length > 1;
 
-    return { average: avg, distribution: dist, hasConsensus: consensus };
+    return { average: avgStr, playerVotes: pVotes, hasConsensus: consensus };
   }, [roomState]);
 
   const prevRevealedRef = useRef(false);
@@ -65,8 +121,25 @@ export function ResultsModal() {
 
   if (!roomState?.revealed) return null;
 
-  const maxCount = Math.max(...distribution.map(d => d.count), 1);
   const totalVotes = Object.keys(roomState.votes).length;
+  const VOTE_OPTIONS = ['1','2','3','4','5','6','7','8','9','10'];
+
+  const handleChangeVote = (direction: 'up' | 'down') => {
+    const myPlayer = roomState.players.find(p => p.name === currentPlayer);
+    if (!myPlayer) return;
+    const currentVote = roomState.votes[myPlayer.id];
+    if (!currentVote) return;
+    const idx = VOTE_OPTIONS.indexOf(currentVote);
+    if (idx === -1) return;
+    const newIdx = direction === 'up' ? Math.min(idx + 1, VOTE_OPTIONS.length - 1) : Math.max(idx - 1, 0);
+    if (newIdx !== idx) vote(VOTE_OPTIONS[newIdx]);
+  };
+
+  const colorClasses = {
+    green: 'text-green-400 border-green-500/50 bg-green-500/10',
+    yellow: 'text-yellow-400 border-yellow-500/50 bg-yellow-500/10',
+    red: 'text-red-400 border-red-500/50 bg-red-500/10',
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 results-backdrop" onClick={handleNewRound}>
@@ -75,11 +148,11 @@ export function ResultsModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Average */}
-        <div className="flex items-center justify-center gap-3 mb-5">
-          <span className="text-4xl">🎯</span>
-          <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono">{t('game.average')}</div>
-            <div className="text-5xl font-bold text-bal-green text-glow-green font-mono">{average}</div>
+        <div className="mb-5">
+          <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono text-center">{t('game.average')}</div>
+          <div className="flex items-center justify-center">
+            <span className="text-4xl mr-3">🎯</span>
+            <div className="text-5xl font-bold text-bal-green text-glow-green font-mono text-center">{average}</div>
           </div>
         </div>
 
@@ -92,22 +165,28 @@ export function ResultsModal() {
           </div>
         )}
 
-        {/* Vote distribution bar chart */}
+        {/* Individual votes */}
         <div className="mb-5">
           <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono text-center mb-3">
             {t('game.votes')} ({totalVotes})
           </div>
-          <div className="flex items-end justify-center gap-3 h-32">
-            {distribution.map(({ value, count }) => (
-              <div key={value} className="flex flex-col items-center gap-1">
-                <span className="text-xs text-bal-text-dim font-mono">{count}</span>
-                <div
-                  className="vote-bar w-10 rounded-t-md min-h-[4px]"
-                  style={{ height: `${(count / maxCount) * 100}px` }}
+          <div className="flex flex-col gap-2">
+            {playerVotes.map(({ name, vote: pVote, color }) => {
+              const isMe = name === currentPlayer;
+              return (
+                <VoteRow
+                  key={name}
+                  name={name}
+                  pVote={pVote}
+                  color={color}
+                  isMe={isMe}
+                  colorClasses={colorClasses}
+                  onChangeVote={handleChangeVote}
+                  onDirectVote={(v) => vote(v)}
+                  voteOptions={VOTE_OPTIONS}
                 />
-                <span className="text-sm font-bold text-bal-text font-mono">{value}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

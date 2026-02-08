@@ -7,30 +7,22 @@ import type { Player as PlayerType } from '../types';
 // Table center in percentage
 const TABLE_CENTER = { x: 50, y: 50 };
 
-// 10 fixed seat positions around the table (percentage-based)
-const FIXED_SEATS = [
-  { x: 50, y: 3  },   // 0: top center
-  { x: 80, y: 10 },   // 1: top right
-  { x: 95, y: 42 },   // 2: right
-  { x: 82, y: 76 },   // 3: bottom right
-  { x: 62, y: 92 },   // 4: bottom right-center
-  { x: 38, y: 92 },   // 5: bottom left-center
-  { x: 18, y: 76 },   // 6: bottom left
-  { x: 5,  y: 42 },   // 7: left
-  { x: 20, y: 10 },   // 8: top left
-  { x: 50, y: 50 },   // 9: overflow fallback
-];
-
-// Pick N evenly-spaced seats from the 9 edge positions
-function pickSeats(count: number): number[] {
-  const n = Math.min(count, 9);
-  if (n <= 0) return [];
-  const indices: number[] = [];
-  const step = 9 / n;
+// Generate N evenly-spaced seats around an ellipse (poker table shape)
+function generateSeats(count: number): { x: number; y: number }[] {
+  const n = Math.min(Math.max(count, 1), 10);
+  const seats: { x: number; y: number }[] = [];
+  const cx = 50, cy = 48; // center of ellipse
+  const rx = 44, ry = 44; // radii (percentage)
+  // Start from top center (-π/2) and go clockwise
+  const startAngle = -Math.PI / 2;
   for (let i = 0; i < n; i++) {
-    indices.push(Math.floor(i * step) % 9);
+    const angle = startAngle + (2 * Math.PI * i) / n;
+    seats.push({
+      x: Math.round(cx + rx * Math.cos(angle)),
+      y: Math.round(cy + ry * Math.sin(angle)),
+    });
   }
-  return indices;
+  return seats;
 }
 
 // Calculate card offset (in px) pointing from seat toward table center
@@ -40,8 +32,8 @@ function getCardOffset(seatX: number, seatY: number): { dx: number; dy: number }
   const dirY = TABLE_CENTER.y - seatY;
   const len = Math.sqrt(dirX * dirX + dirY * dirY);
   if (len === 0) return { dx: 0, dy: 0 };
-  // Normalize and scale — push card ~55px toward center
-  const scale = 55 / len;
+  // Normalize and scale — push card ~85px toward center
+  const scale = 85 / len;
   return { dx: dirX * scale, dy: dirY * scale };
 }
 
@@ -71,7 +63,8 @@ export function PokerTable() {
   }, []);
 
   const players = roomState?.players ?? [];
-  const seatIndices = pickSeats(Math.max(players.length, 6));
+  const totalSeats = Math.max(players.length, 6);
+  const seats = generateSeats(totalSeats);
 
   // Mobile: vertical list
   if (isMobile) {
@@ -119,8 +112,7 @@ export function PokerTable() {
         <div className="poker-table-balatro absolute inset-0 rounded-full lg:rounded-[200px] flex items-center justify-center">
           
           {/* Fixed seats — evenly distributed */}
-          {seatIndices.map((seatIdx, i) => {
-            const seat = FIXED_SEATS[seatIdx];
+          {seats.map((seat, i) => {
             const player = players[i];
             const cardOffset = getCardOffset(seat.x, seat.y);
             return (
