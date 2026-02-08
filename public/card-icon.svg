@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" width="120" height="160">
+  <rect x="4" y="4" width="112" height="152" rx="12" fill="#1a1a2e" stroke="#c9a84c" stroke-width="3"/>
+  <rect x="12" y="12" width="96" height="136" rx="8" fill="#16213e"/>
+  <!-- Diamond pattern -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M10 0L20 10L10 20L0 10Z" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.3"/>
+  </pattern>
+  <rect x="12" y="12" width="96" height="136" rx="8" fill="url(#grid)"/>
+  <!-- Center joker symbol -->
+  <text x="60" y="95" text-anchor="middle" font-size="50" fill="#c9a84c">🃏</text>
+  <!-- Corner values -->
+  <text x="22" y="36" font-size="18" font-family="monospace" font-weight="bold" fill="#22c55e">P</text>
+  <text x="98" y="140" font-size="18" font-family="monospace" font-weight="bold" fill="#22c55e" text-anchor="end">P</text>
+</svg>
