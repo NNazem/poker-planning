@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('vote', ({ roomId, vote }) => {
-    if (rooms[roomId] && !rooms[roomId].revealed) {
+    if (rooms[roomId]) {
       rooms[roomId].votes[socket.id] = vote;
       io.to(roomId).emit('room-update', rooms[roomId]);
     }
