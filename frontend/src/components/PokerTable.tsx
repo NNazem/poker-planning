@@ -50,7 +50,7 @@ const AVATAR_COLORS = [
   'from-sky-800 to-sky-600',
 ];
 
-export function PokerTable() {
+export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onReveal?: () => void }) {
   const { t } = useTranslation();
   const { roomState } = useGame();
   const [isMobile, setIsMobile] = useState(false);
@@ -73,9 +73,18 @@ export function PokerTable() {
         <div className="poker-table-balatro relative rounded-2xl p-4 mx-auto max-w-sm">
           {roomState && !roomState.revealed && (
             <div className="text-center py-2">
-              <span className="text-bal-green/70 text-sm animate-pulse font-mono">
-                {t('game.waiting')}
-              </span>
+              {allVoted ? (
+                <button
+                  onClick={onReveal}
+                  className="btn btn-warning btn-sm gap-1 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
+                >
+                  👁️ {t('game.revealVotes', 'Rivela voti')}
+                </button>
+              ) : (
+                <span className="text-sm animate-pulse font-mono text-bal-green/70">
+                  {t('game.waiting')}
+                </span>
+              )}
             </div>
           )}
           <div className="flex flex-col gap-2 relative z-10">
@@ -145,9 +154,18 @@ export function PokerTable() {
           <div className="relative z-10 text-center">
             <ResultsDisplay />
             {roomState && !roomState.revealed && (
-              <div className="text-xl lg:text-2xl text-bal-green/60 animate-pulse font-mono">
-                {t('game.waiting')}
-              </div>
+              allVoted ? (
+                <button
+                  onClick={onReveal}
+                  className="btn btn-lg btn-warning gap-2 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
+                >
+                  👁️ {t('game.revealVotes', 'Rivela voti')}
+                </button>
+              ) : (
+                <div className="text-xl lg:text-2xl text-bal-green/60 animate-pulse font-mono">
+                  {t('game.waiting')}
+                </div>
+              )
             )}
           </div>
         </div>

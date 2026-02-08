@@ -23,9 +23,11 @@ interface UseSocketReturn {
   roomState: RoomState | null;
   pokeEvent: PokeEvent | null;
   reactionEvent: ReactionEvent | null;
+  joinError: string | null;
   joinRoom: (roomId: string, playerName: string) => void;
   vote: (roomId: string, vote: string) => void;
   newRound: (roomId: string) => void;
+  revealVotes: (roomId: string) => void;
   poke: (roomId: string, targetId: string) => void;
   sendReaction: (roomId: string, emoji: string) => void;
 }
@@ -36,6 +38,7 @@ export function useSocket(): UseSocketReturn {
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [pokeEvent, setPokeEvent] = useState<PokeEvent | null>(null);
   const [reactionEvent, setReactionEvent] = useState<ReactionEvent | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     const socket = io(SERVER_URL);
@@ -60,6 +63,10 @@ export function useSocket(): UseSocketReturn {
       setTimeout(() => setPokeEvent(null), 1000);
     });
 
+    socket.on('join-error', (data: { message: string }) => {
+      setJoinError(data.message);
+    });
+
     socket.on('reaction', (data: ReactionEvent) => {
       setReactionEvent(data);
       setTimeout(() => setReactionEvent(null), 2000);
@@ -71,6 +78,7 @@ export function useSocket(): UseSocketReturn {
   }, []);
 
   const joinRoom = useCallback((roomId: string, playerName: string) => {
+    setJoinError(null);
     socketRef.current?.emit('join-room', { roomId, playerName });
   }, []);
 
@@ -82,6 +90,10 @@ export function useSocket(): UseSocketReturn {
     socketRef.current?.emit('new-round', { roomId });
   }, []);
 
+  const revealVotes = useCallback((roomId: string) => {
+    socketRef.current?.emit('reveal-votes', { roomId });
+  }, []);
+
   const poke = useCallback((roomId: string, targetId: string) => {
     socketRef.current?.emit('poke', { roomId, targetId });
   }, []);
@@ -90,5 +102,5 @@ export function useSocket(): UseSocketReturn {
     socketRef.current?.emit('reaction', { roomId, emoji });
   }, []);
 
-  return { connected, roomState, pokeEvent, reactionEvent, joinRoom, vote, newRound, poke, sendReaction };
+  return { connected, roomState, pokeEvent, reactionEvent, joinError, joinRoom, vote, newRound, revealVotes, poke, sendReaction };
 }
