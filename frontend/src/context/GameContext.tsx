@@ -23,6 +23,7 @@ interface GameContextType {
   pokeEvent: PokeEvent | null;
   reactionEvent: ReactionEvent | null;
   myPlayerId: string | null;
+  joinError: string | null;
   joinRoom: (roomId: string, playerName: string) => void;
   vote: (vote: string) => void;
   newRound: () => void;
@@ -35,7 +36,7 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { connected, roomState, pokeEvent, reactionEvent, joinRoom: socketJoin, vote: socketVote, newRound: socketNewRound, revealVotes: socketRevealVotes, poke: socketPoke, sendReaction: socketReaction } = useSocket();
+  const { connected, roomState, pokeEvent, reactionEvent, joinError, joinRoom: socketJoin, vote: socketVote, newRound: socketNewRound, revealVotes: socketRevealVotes, poke: socketPoke, sendReaction: socketReaction } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
   const [myVote, setMyVote] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       pokeEvent,
       reactionEvent,
       myPlayerId,
+      joinError,
       joinRoom,
       vote,
       newRound,
