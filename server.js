@@ -1,9 +1,21 @@
 const express = require('express');
+const helmet = require('helmet');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+      imgSrc: ["'self'", "data:", "blob:"],
+    },
+  },
+}));
 app.use(express.static('public'));
 
 let rooms = {}; // { roomId: { players: [], votes: {}, revealed: false } }
