@@ -50,7 +50,7 @@ const AVATAR_COLORS = [
   'from-sky-800 to-sky-600',
 ];
 
-export function PokerTable() {
+export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onReveal?: () => void }) {
   const { t } = useTranslation();
   const { roomState } = useGame();
   const [isMobile, setIsMobile] = useState(false);
@@ -71,16 +71,22 @@ export function PokerTable() {
     return (
       <div className="mb-6">
         <div className="poker-table-balatro relative rounded-2xl p-4 mx-auto max-w-sm">
-          {roomState && !roomState.revealed && (() => {
-            const allVoted = roomState.players.length > 0 && roomState.players.every(p => roomState.votes[p.id] !== undefined);
-            return (
-              <div className="text-center py-2">
-                <span className={`text-sm animate-pulse font-mono ${allVoted ? 'text-bal-gold' : 'text-bal-green/70'}`}>
-                  {allVoted ? t('game.allVoted', '✅ Tutti hanno votato!') : t('game.waiting')}
+          {roomState && !roomState.revealed && (
+            <div className="text-center py-2">
+              {allVoted ? (
+                <button
+                  onClick={onReveal}
+                  className="btn btn-warning btn-sm gap-1 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
+                >
+                  👁️ {t('game.revealVotes', 'Rivela voti')}
+                </button>
+              ) : (
+                <span className="text-sm animate-pulse font-mono text-bal-green/70">
+                  {t('game.waiting')}
                 </span>
-              </div>
-            );
-          })()}
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-2 relative z-10">
             {players.map((player, index) => (
               <MobilePlayerRow
@@ -147,14 +153,20 @@ export function PokerTable() {
           {/* Center content */}
           <div className="relative z-10 text-center">
             <ResultsDisplay />
-            {roomState && !roomState.revealed && (() => {
-              const allVoted = roomState.players.length > 0 && roomState.players.every(p => roomState.votes[p.id] !== undefined);
-              return (
-                <div className={`text-xl lg:text-2xl ${allVoted ? 'text-bal-gold' : 'text-bal-green/60'} animate-pulse font-mono`}>
-                  {allVoted ? t('game.allVoted', '✅ Tutti hanno votato!') : t('game.waiting')}
+            {roomState && !roomState.revealed && (
+              allVoted ? (
+                <button
+                  onClick={onReveal}
+                  className="btn btn-lg btn-warning gap-2 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
+                >
+                  👁️ {t('game.revealVotes', 'Rivela voti')}
+                </button>
+              ) : (
+                <div className="text-xl lg:text-2xl text-bal-green/60 animate-pulse font-mono">
+                  {t('game.waiting')}
                 </div>
-              );
-            })()}
+              )
+            )}
           </div>
         </div>
       </div>

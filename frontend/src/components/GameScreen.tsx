@@ -71,19 +71,7 @@ export function GameScreen({ onBack }: GameScreenProps) {
 
       <div className="p-4 lg:p-8">
         {/* Poker Table */}
-        <PokerTable />
-
-        {/* Reveal button when all voted */}
-        {allVoted && (
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={revealVotes}
-              className="btn btn-lg btn-warning gap-2 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
-            >
-              👁️ {t('game.revealVotes', 'Rivela voti')}
-            </button>
-          </div>
-        )}
+        <PokerTable allVoted={allVoted} onReveal={revealVotes} />
 
         {/* Voting Cards */}
         <VotingCards />
