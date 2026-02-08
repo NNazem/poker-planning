@@ -11,7 +11,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "wss:", "ws:"],
+      connectSrc: ["'self'", "wss://poker.nazem.xyz", "ws://localhost:*"],
       imgSrc: ["'self'", "data:", "blob:"],
     },
   },
