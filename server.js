@@ -20,10 +20,27 @@ app.use(express.static('public'));
 
 let rooms = {}; // { roomId: { players: [], votes: {}, revealed: false } }
 
+// ── Validation helpers ──
+const VALID_VOTES = new Set(['1','2','3','4','5','6','7','8','9','10']);
+const ROOM_RE = /^[a-zA-Z0-9_-]{1,50}$/;
+const NAME_RE = /^[^\x00-\x1f]{1,30}$/; // no control chars, 1-30 length
+const MAX_ROOMS = 100;
+
+function isStr(v) { return typeof v === 'string'; }
+
+function validRoom(id) { return isStr(id) && ROOM_RE.test(id); }
+function validName(n) { return isStr(n) && n.trim().length > 0 && NAME_RE.test(n); }
+function validVote(v) { return isStr(v) && VALID_VOTES.has(v); }
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('join-room', ({ roomId, playerName }) => {
+  socket.on('join-room', (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId, playerName } = payload;
+    if (!validRoom(roomId)) return socket.emit('join-error', { message: 'Room ID non valido (alfanumerico, max 50 caratteri).' });
+    if (!validName(playerName)) return socket.emit('join-error', { message: 'Nome non valido (1-30 caratteri, no caratteri di controllo).' });
+    if (!rooms[roomId] && Object.keys(rooms).length >= MAX_ROOMS) return socket.emit('join-error', { message: 'Limite massimo di stanze raggiunto.' });
     // First, remove this socket from any room it was previously in
     for (let rid in rooms) {
       const idx = rooms[rid].players.findIndex(p => p.id === socket.id);
@@ -61,32 +78,36 @@ io.on('connection', (socket) => {
     console.log(`${playerName} joined room ${roomId}`);
   });
 
-  socket.on('vote', ({ roomId, vote }) => {
-    if (rooms[roomId]) {
-      rooms[roomId].votes[socket.id] = vote;
-      io.to(roomId).emit('room-update', rooms[roomId]);
-    }
+  socket.on('vote', (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId, vote } = payload;
+    if (!validRoom(roomId) || !validVote(vote) || !rooms[roomId]) return;
+    rooms[roomId].votes[socket.id] = vote;
+    io.to(roomId).emit('room-update', rooms[roomId]);
   });
 
-  socket.on('reveal-votes', ({ roomId }) => {
-    if (rooms[roomId] && !rooms[roomId].revealed) {
-      rooms[roomId].revealed = true;
-      io.to(roomId).emit('room-update', rooms[roomId]);
-    }
+  socket.on('reveal-votes', (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId } = payload;
+    if (!validRoom(roomId) || !rooms[roomId] || rooms[roomId].revealed) return;
+    rooms[roomId].revealed = true;
+    io.to(roomId).emit('room-update', rooms[roomId]);
   });
 
-  socket.on('new-round', ({ roomId }) => {
-    if (rooms[roomId]) {
-      rooms[roomId].votes = {};
-      rooms[roomId].revealed = false;
-      io.to(roomId).emit('room-update', rooms[roomId]);
-    }
+  socket.on('new-round', (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId } = payload;
+    if (!validRoom(roomId) || !rooms[roomId]) return;
+    rooms[roomId].votes = {};
+    rooms[roomId].revealed = false;
+    io.to(roomId).emit('room-update', rooms[roomId]);
   });
 
-  socket.on('get-room-state', ({ roomId }) => {
-    if (rooms[roomId]) {
-      socket.emit('room-update', rooms[roomId]);
-    }
+  socket.on('get-room-state', (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId } = payload;
+    if (!validRoom(roomId) || !rooms[roomId]) return;
+    socket.emit('room-update', rooms[roomId]);
   });
 
   socket.on('disconnect', () => {
