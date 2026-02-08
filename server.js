@@ -25,6 +25,10 @@ const VALID_VOTES = new Set(['1','2','3','4','5','6','7','8','9','10']);
 const ROOM_RE = /^[a-zA-Z0-9_-]{1,50}$/;
 const NAME_RE = /^[^\x00-\x1f]{1,30}$/; // no control chars, 1-30 length
 const MAX_ROOMS = 100;
+const MAX_PLAYERS_PER_ROOM = 20;
+const MAX_CONNECTIONS_PER_IP = 5;
+const RATE_LIMIT_WINDOW_MS = 1000;
+const RATE_LIMIT_MAX_EVENTS = 10;
 
 function isStr(v) { return typeof v === 'string'; }
 
@@ -32,28 +36,65 @@ function validRoom(id) { return isStr(id) && ROOM_RE.test(id); }
 function validName(n) { return isStr(n) && n.trim().length > 0 && NAME_RE.test(n); }
 function validVote(v) { return isStr(v) && VALID_VOTES.has(v); }
 
+// ── Per-IP connection tracking ──
+const connectionsPerIp = {}; // { ip: count }
+
+function getIp(socket) {
+  return socket.handshake.headers['x-forwarded-for']?.split(',')[0]?.trim()
+    || socket.handshake.address;
+}
+
+// ── Per-socket rate limiter ──
+function rateLimited(socket) {
+  const now = Date.now();
+  if (!socket._rl || now - socket._rl.windowStart > RATE_LIMIT_WINDOW_MS) {
+    socket._rl = { windowStart: now, count: 1 };
+    return false;
+  }
+  socket._rl.count++;
+  if (socket._rl.count > RATE_LIMIT_MAX_EVENTS) {
+    return true;
+  }
+  return false;
+}
+
+// ── Connection limit middleware ──
+io.use((socket, next) => {
+  const ip = getIp(socket);
+  const current = connectionsPerIp[ip] || 0;
+  if (current >= MAX_CONNECTIONS_PER_IP) {
+    return next(new Error('Troppe connessioni da questo IP.'));
+  }
+  connectionsPerIp[ip] = current + 1;
+  socket._ip = ip;
+  next();
+});
+
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('User connected:', socket.id, 'IP:', socket._ip);
+  socket._currentRoom = null; // track current room for O(1) cleanup
 
   socket.on('join-room', (payload) => {
+    if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;
     const { roomId, playerName } = payload;
     if (!validRoom(roomId)) return socket.emit('join-error', { message: 'Room ID non valido (alfanumerico, max 50 caratteri).' });
     if (!validName(playerName)) return socket.emit('join-error', { message: 'Nome non valido (1-30 caratteri, no caratteri di controllo).' });
     if (!rooms[roomId] && Object.keys(rooms).length >= MAX_ROOMS) return socket.emit('join-error', { message: 'Limite massimo di stanze raggiunto.' });
-    // First, remove this socket from any room it was previously in
-    for (let rid in rooms) {
-      const idx = rooms[rid].players.findIndex(p => p.id === socket.id);
+    // Remove from previous room (O(1) lookup)
+    const prevRoom = socket._currentRoom;
+    if (prevRoom && rooms[prevRoom]) {
+      const idx = rooms[prevRoom].players.findIndex(p => p.id === socket.id);
       if (idx !== -1) {
-        rooms[rid].players.splice(idx, 1);
-        delete rooms[rid].votes[socket.id];
-        if (rooms[rid].players.length === 0) {
-          delete rooms[rid];
+        rooms[prevRoom].players.splice(idx, 1);
+        delete rooms[prevRoom].votes[socket.id];
+        if (rooms[prevRoom].players.length === 0) {
+          delete rooms[prevRoom];
         } else {
-          io.to(rid).emit('room-update', rooms[rid]);
+          io.to(prevRoom).emit('room-update', rooms[prevRoom]);
         }
-        socket.leave(rid);
       }
+      socket.leave(prevRoom);
     }
 
     socket.join(roomId);
@@ -71,14 +112,21 @@ io.on('connection', (socket) => {
     }
 
     if (!existing) {
+      if (rooms[roomId].players.length >= MAX_PLAYERS_PER_ROOM) {
+        socket.emit('join-error', { message: `Stanza piena (max ${MAX_PLAYERS_PER_ROOM} giocatori).` });
+        socket.leave(roomId);
+        return;
+      }
       rooms[roomId].players.push({ id: socket.id, name: playerName });
     }
     
+    socket._currentRoom = roomId;
     io.to(roomId).emit('room-update', rooms[roomId]);
     console.log(`${playerName} joined room ${roomId}`);
   });
 
   socket.on('vote', (payload) => {
+    if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;
     const { roomId, vote } = payload;
     if (!validRoom(roomId) || !validVote(vote) || !rooms[roomId]) return;
@@ -87,6 +135,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('reveal-votes', (payload) => {
+    if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;
     const { roomId } = payload;
     if (!validRoom(roomId) || !rooms[roomId] || rooms[roomId].revealed) return;
@@ -95,6 +144,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('new-round', (payload) => {
+    if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;
     const { roomId } = payload;
     if (!validRoom(roomId) || !rooms[roomId]) return;
@@ -104,6 +154,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('get-room-state', (payload) => {
+    if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;
     const { roomId } = payload;
     if (!validRoom(roomId) || !rooms[roomId]) return;
@@ -111,20 +162,26 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Remove player from all rooms
-    for (let roomId in rooms) {
-      const playerIndex = rooms[roomId].players.findIndex(p => p.id === socket.id);
+    // Decrement IP connection count
+    const ip = socket._ip;
+    if (ip && connectionsPerIp[ip]) {
+      connectionsPerIp[ip]--;
+      if (connectionsPerIp[ip] <= 0) delete connectionsPerIp[ip];
+    }
+    // Remove player from their room (O(1) lookup)
+    const rid = socket._currentRoom;
+    if (rid && rooms[rid]) {
+      const playerIndex = rooms[rid].players.findIndex(p => p.id === socket.id);
       if (playerIndex !== -1) {
-        const playerName = rooms[roomId].players[playerIndex].name;
-        rooms[roomId].players.splice(playerIndex, 1);
-        delete rooms[roomId].votes[socket.id];
-        
-        if (rooms[roomId].players.length === 0) {
-          delete rooms[roomId];
+        const playerName = rooms[rid].players[playerIndex].name;
+        rooms[rid].players.splice(playerIndex, 1);
+        delete rooms[rid].votes[socket.id];
+        if (rooms[rid].players.length === 0) {
+          delete rooms[rid];
         } else {
-          io.to(roomId).emit('room-update', rooms[roomId]);
+          io.to(rid).emit('room-update', rooms[rid]);
         }
-        console.log(`${playerName} left room ${roomId}`);
+        console.log(`${playerName} left room ${rid}`);
       }
     }
   });
