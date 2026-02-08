@@ -150,9 +150,9 @@ export function ResultsModal() {
         {/* Average */}
         <div className="mb-5">
           <div className="text-xs uppercase tracking-wider text-bal-text-muted font-mono text-center">{t('game.average')}</div>
-          <div className="flex items-center justify-center">
-            <span className="text-4xl mr-3">🎯</span>
-            <div className="text-5xl font-bold text-bal-green text-glow-green font-mono text-center">{average}</div>
+          <div className="relative flex justify-center">
+            <span className="text-4xl absolute right-[calc(50%+3ch)] top-1/2 -translate-y-1/2">🎯</span>
+            <div className="text-5xl font-bold text-bal-green text-glow-green font-mono">{average}</div>
           </div>
         </div>
 
