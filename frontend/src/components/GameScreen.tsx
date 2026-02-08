@@ -11,7 +11,7 @@ interface GameScreenProps {
 
 export function GameScreen({ onBack }: GameScreenProps) {
   const { t } = useTranslation();
-  const { currentRoom, roomState, connected } = useGame();
+  const { currentRoom, roomState, connected, revealVotes } = useGame();
   const [copied, setCopied] = useState(false);
 
   const copyRoomLink = () => {
@@ -25,6 +25,7 @@ export function GameScreen({ onBack }: GameScreenProps) {
 
   const totalPlayers = roomState?.players.length ?? 0;
   const votedCount = roomState ? Object.keys(roomState.votes).length : 0;
+  const allVoted = totalPlayers > 0 && votedCount === totalPlayers && !roomState?.revealed;
 
   return (
     <div className="min-h-screen bg-balatro">
@@ -71,6 +72,18 @@ export function GameScreen({ onBack }: GameScreenProps) {
       <div className="p-4 lg:p-8">
         {/* Poker Table */}
         <PokerTable />
+
+        {/* Reveal button when all voted */}
+        {allVoted && (
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={revealVotes}
+              className="btn btn-lg btn-warning gap-2 uppercase tracking-wider font-bold border-2 border-yellow-500 animate-pulse"
+            >
+              👁️ {t('game.revealVotes', 'Rivela voti')}
+            </button>
+          </div>
+        )}
 
         {/* Voting Cards */}
         <VotingCards />

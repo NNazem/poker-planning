@@ -63,16 +63,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('vote', ({ roomId, vote }) => {
-    if (rooms[roomId]) {
+    if (rooms[roomId] && !rooms[roomId].revealed) {
       rooms[roomId].votes[socket.id] = vote;
-      
-      // Check if all players voted
-      const allVoted = rooms[roomId].players.every(p => rooms[roomId].votes[p.id] !== undefined);
-      
-      if (allVoted) {
-        rooms[roomId].revealed = true;
-      }
-      
+      io.to(roomId).emit('room-update', rooms[roomId]);
+    }
+  });
+
+  socket.on('reveal-votes', ({ roomId }) => {
+    if (rooms[roomId] && !rooms[roomId].revealed) {
+      rooms[roomId].revealed = true;
       io.to(roomId).emit('room-update', rooms[roomId]);
     }
   });

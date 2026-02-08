@@ -71,13 +71,16 @@ export function PokerTable() {
     return (
       <div className="mb-6">
         <div className="poker-table-balatro relative rounded-2xl p-4 mx-auto max-w-sm">
-          {roomState && !roomState.revealed && (
-            <div className="text-center py-2">
-              <span className="text-bal-green/70 text-sm animate-pulse font-mono">
-                {t('game.waiting')}
-              </span>
-            </div>
-          )}
+          {roomState && !roomState.revealed && (() => {
+            const allVoted = roomState.players.length > 0 && roomState.players.every(p => roomState.votes[p.id] !== undefined);
+            return (
+              <div className="text-center py-2">
+                <span className={`text-sm animate-pulse font-mono ${allVoted ? 'text-bal-gold' : 'text-bal-green/70'}`}>
+                  {allVoted ? t('game.allVoted', '✅ Tutti hanno votato!') : t('game.waiting')}
+                </span>
+              </div>
+            );
+          })()}
           <div className="flex flex-col gap-2 relative z-10">
             {players.map((player, index) => (
               <MobilePlayerRow
@@ -144,11 +147,14 @@ export function PokerTable() {
           {/* Center content */}
           <div className="relative z-10 text-center">
             <ResultsDisplay />
-            {roomState && !roomState.revealed && (
-              <div className="text-xl lg:text-2xl text-bal-green/60 animate-pulse font-mono">
-                {t('game.waiting')}
-              </div>
-            )}
+            {roomState && !roomState.revealed && (() => {
+              const allVoted = roomState.players.length > 0 && roomState.players.every(p => roomState.votes[p.id] !== undefined);
+              return (
+                <div className={`text-xl lg:text-2xl ${allVoted ? 'text-bal-gold' : 'text-bal-green/60'} animate-pulse font-mono`}>
+                  {allVoted ? t('game.allVoted', '✅ Tutti hanno votato!') : t('game.waiting')}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
