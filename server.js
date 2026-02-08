@@ -9,8 +9,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
       connectSrc: ["'self'", "wss://poker.nazem.xyz", "ws://localhost:*"],
       imgSrc: ["'self'", "data:", "blob:"],
     },
