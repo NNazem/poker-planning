@@ -10,9 +10,10 @@ interface LoginScreenProps {
 
 export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
   const { t } = useTranslation();
-  const { joinRoom, connected } = useGame();
+  const { joinRoom, joinError, roomState, connected } = useGame();
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
+  const [pendingRoom, setPendingRoom] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialRoom) {
@@ -20,14 +21,27 @@ export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
     }
   }, [initialRoom]);
 
+  // Navigate to game on successful join
+  useEffect(() => {
+    if (pendingRoom && roomState && !joinError) {
+      onJoin(pendingRoom);
+      setPendingRoom(null);
+    }
+  }, [pendingRoom, roomState, joinError, onJoin]);
+
+  // Clear pending on error
+  useEffect(() => {
+    if (joinError) setPendingRoom(null);
+  }, [joinError]);
+
   const handleJoin = () => {
     if (!playerName.trim()) {
       alert(t('login.namePlaceholder') + '!');
       return;
     }
     const finalRoomId = roomId.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
+    setPendingRoom(finalRoomId);
     joinRoom(finalRoomId, playerName.trim());
-    onJoin(finalRoomId);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,6 +99,11 @@ export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
               onKeyDown={handleKeyDown}
             />
             <p className="text-xs text-bal-text-muted text-center">{t('login.createNew')}</p>
+            {joinError && (
+              <div className="text-center text-sm text-bal-red font-mono bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                ⚠️ {joinError}
+              </div>
+            )}
             <button
               className="w-full py-3 px-6 text-lg font-bold uppercase tracking-wider rounded-lg
                 bg-bal-green-dark border-2 border-bal-green text-bal-green

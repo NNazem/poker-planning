@@ -45,16 +45,15 @@ io.on('connection', (socket) => {
       rooms[roomId] = { players: [], votes: {}, revealed: false };
     }
 
-    // Check if player with same name already exists (reconnect case)
+    // Reject if name already taken by another socket
     const existing = rooms[roomId].players.find(p => p.name === playerName);
-    if (existing) {
-      const oldVote = rooms[roomId].votes[existing.id];
-      if (oldVote !== undefined) {
-        rooms[roomId].votes[socket.id] = oldVote;
-        delete rooms[roomId].votes[existing.id];
-      }
-      existing.id = socket.id;
-    } else {
+    if (existing && existing.id !== socket.id) {
+      socket.emit('join-error', { message: `Il nome "${playerName}" è già in uso in questa stanza.` });
+      socket.leave(roomId);
+      return;
+    }
+
+    if (!existing) {
       rooms[roomId].players.push({ id: socket.id, name: playerName });
     }
     
@@ -65,14 +64,13 @@ io.on('connection', (socket) => {
   socket.on('vote', ({ roomId, vote }) => {
     if (rooms[roomId]) {
       rooms[roomId].votes[socket.id] = vote;
-      
-      // Check if all players voted
-      const allVoted = rooms[roomId].players.every(p => rooms[roomId].votes[p.id] !== undefined);
-      
-      if (allVoted) {
-        rooms[roomId].revealed = true;
-      }
-      
+      io.to(roomId).emit('room-update', rooms[roomId]);
+    }
+  });
+
+  socket.on('reveal-votes', ({ roomId }) => {
+    if (rooms[roomId] && !rooms[roomId].revealed) {
+      rooms[roomId].revealed = true;
       io.to(roomId).emit('room-update', rooms[roomId]);
     }
   });
