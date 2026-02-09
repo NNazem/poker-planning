@@ -142,7 +142,7 @@ export function ResultsModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 results-backdrop" onClick={handleNewRound}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 results-backdrop">
       <div
         className="crt-enter w-full max-w-lg bg-bal-bg/90 border-2 border-bal-gold/40 rounded-xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
