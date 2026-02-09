@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
+import { playPewSound, playHitSound } from '../utils/sounds';
 import type { Player as PlayerType } from '../types';
 
 // Table center in percentage
 const TABLE_CENTER = { x: 50, y: 50 };
 
-// Generate N evenly-spaced seats around an ellipse (poker table shape)
+// Generate N evenly-spaced seats around an ellipse
 function generateSeats(count: number): { x: number; y: number }[] {
   const n = Math.min(Math.max(count, 1), 10);
   const seats: { x: number; y: number }[] = [];
-  const cx = 50, cy = 48; // center of ellipse
-  const rx = 44, ry = 44; // radii (percentage)
-  // Start from top center (-π/2) and go clockwise
+  const cx = 50, cy = 48;
+  const rx = 44, ry = 44;
   const startAngle = -Math.PI / 2;
   for (let i = 0; i < n; i++) {
     const angle = startAngle + (2 * Math.PI * i) / n;
@@ -25,14 +25,11 @@ function generateSeats(count: number): { x: number; y: number }[] {
   return seats;
 }
 
-// Calculate card offset (in px) pointing from seat toward table center
-// Returns { dx, dy } to translate the card
 function getCardOffset(seatX: number, seatY: number): { dx: number; dy: number } {
   const dirX = TABLE_CENTER.x - seatX;
   const dirY = TABLE_CENTER.y - seatY;
   const len = Math.sqrt(dirX * dirX + dirY * dirY);
   if (len === 0) return { dx: 0, dy: 0 };
-  // Normalize and scale — push card ~85px toward center
   const scale = 85 / len;
   return { dx: dirX * scale, dy: dirY * scale };
 }
@@ -50,10 +47,91 @@ const AVATAR_COLORS = [
   'from-sky-800 to-sky-600',
 ];
 
+// ── Bullet component ──
+function Bullet({ fromEl, toEl, onDone }: { fromEl: HTMLElement; toEl: HTMLElement; onDone: () => void }) {
+  const bulletRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect = toEl.getBoundingClientRect();
+    const startX = fromRect.left + fromRect.width / 2;
+    const startY = fromRect.top + fromRect.height / 2;
+    const endX = toRect.left + toRect.width / 2;
+    const endY = toRect.top + toRect.height / 2;
+
+    const bullet = bulletRef.current;
+    if (!bullet) return;
+
+    // Calculate angle for rotation
+    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
+
+    bullet.style.left = `${startX}px`;
+    bullet.style.top = `${startY}px`;
+    bullet.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+    playPewSound();
+
+    const anim = bullet.animate([
+      { left: `${startX}px`, top: `${startY}px`, opacity: 1 },
+      { left: `${endX}px`, top: `${endY}px`, opacity: 1 },
+    ], {
+      duration: 300,
+      easing: 'linear',
+      fill: 'forwards',
+    });
+
+    anim.onfinish = () => {
+      playHitSound();
+      onDone();
+    };
+  }, [fromEl, toEl, onDone]);
+
+  return (
+    <div
+      ref={bulletRef}
+      className="fixed z-50 pointer-events-none"
+      style={{ width: 0, height: 0 }}
+    >
+      {/* Bullet trail */}
+      <div className="absolute" style={{
+        width: '18px',
+        height: '6px',
+        background: 'linear-gradient(90deg, transparent, #fbbf24, #f59e0b, #fff)',
+        borderRadius: '3px',
+        boxShadow: '0 0 8px #fbbf24, 0 0 16px #f59e0b',
+        transform: 'translate(-50%, -50%)',
+      }} />
+    </div>
+  );
+}
+
 export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onReveal?: () => void }) {
   const { t } = useTranslation();
-  const { roomState } = useGame();
+  const { roomState, shootEvent } = useGame();
   const [isMobile, setIsMobile] = useState(false);
+  const playerRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [activeBullets, setActiveBullets] = useState<{ id: number; from: string; target: string }[]>([]);
+  const bulletIdRef = useRef(0);
+
+  const registerPlayerRef = useCallback((playerId: string, el: HTMLElement | null) => {
+    playerRefs.current[playerId] = el;
+  }, []);
+
+  // Handle shoot events — create bullet
+  useEffect(() => {
+    if (!shootEvent) return;
+    const { from, target } = shootEvent;
+    const fromEl = playerRefs.current[from];
+    const toEl = playerRefs.current[target];
+    if (!fromEl || !toEl) return;
+
+    const id = ++bulletIdRef.current;
+    setActiveBullets(prev => [...prev, { id, from, target }]);
+  }, [shootEvent]);
+
+  const removeBullet = useCallback((id: number) => {
+    setActiveBullets(prev => prev.filter(b => b.id !== id));
+  }, []);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -96,9 +174,9 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
                 hasVoted={roomState!.votes[player.id] !== undefined}
                 vote={roomState!.votes[player.id]}
                 revealed={roomState!.revealed}
+                registerRef={registerPlayerRef}
               />
             ))}
-            {/* Empty seats on mobile */}
             {Array.from({ length: Math.max(0, 6 - players.length) }).map((_, i) => (
               <div key={`empty-${i}`} className="flex items-center gap-3 rounded-xl px-3 py-2 border border-bal-surface-light/20 opacity-30">
                 <div className="w-10 h-10 rounded-full border-2 border-dashed border-bal-text-muted/30 flex items-center justify-center shrink-0">
@@ -110,17 +188,23 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
           </div>
           <ResultsDisplay />
         </div>
+        {/* Bullets overlay */}
+        {activeBullets.map(b => {
+          const fromEl = playerRefs.current[b.from];
+          const toEl = playerRefs.current[b.target];
+          if (!fromEl || !toEl) return null;
+          return <Bullet key={b.id} fromEl={fromEl} toEl={toEl} onDone={() => removeBullet(b.id)} />;
+        })}
       </div>
     );
   }
 
-  // Desktop: fixed seat positions
+  // Desktop
   return (
     <div className="flex justify-center mb-6 lg:mb-10">
       <div className="relative w-full max-w-4xl" style={{ aspectRatio: '16/10' }}>
         <div className="poker-table-balatro absolute inset-0 rounded-full lg:rounded-[200px] flex items-center justify-center">
-          
-          {/* Fixed seats — evenly distributed */}
+
           {seats.map((seat, i) => {
             const player = players[i];
             const cardOffset = getCardOffset(seat.x, seat.y);
@@ -142,6 +226,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
                     vote={roomState!.votes[player.id]}
                     revealed={roomState!.revealed}
                     cardOffset={cardOffset}
+                    registerRef={registerPlayerRef}
                   />
                 ) : (
                   <EmptySeat />
@@ -170,6 +255,14 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
           </div>
         </div>
       </div>
+
+      {/* Bullets overlay */}
+      {activeBullets.map(b => {
+        const fromEl = playerRefs.current[b.from];
+        const toEl = playerRefs.current[b.target];
+        if (!fromEl || !toEl) return null;
+        return <Bullet key={b.id} fromEl={fromEl} toEl={toEl} onDone={() => removeBullet(b.id)} />;
+      })}
     </div>
   );
 }
@@ -179,34 +272,46 @@ function EmptySeat() {
   return (
     <div className="flex flex-col items-center gap-1 opacity-25">
       <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full border-2 border-dashed border-bal-text-muted/40 flex items-center justify-center">
-        <span className="text-bal-text-muted/50 text-lg">+</span>
+        <span className="text-bal-text-muted/40 text-sm">?</span>
       </div>
     </div>
   );
 }
 
 /* ── Desktop Seat Player ── */
-function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx: 0, dy: 55 } }: {
+function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx: 0, dy: 55 }, registerRef }: {
   player: PlayerType;
   index: number;
   hasVoted: boolean;
   vote?: string;
   revealed: boolean;
   cardOffset?: { dx: number; dy: number };
+  registerRef: (id: string, el: HTMLElement | null) => void;
 }) {
-  const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
+  const { currentPlayer, shootPlayer, shootEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
   const colorClass = AVATAR_COLORS[index % AVATAR_COLORS.length];
-  const [isPoked, setIsPoked] = useState(false);
+  const [isHit, setIsHit] = useState(false);
   const [showReaction, setShowReaction] = useState<string | null>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  // Register ref for bullet tracking
+  useEffect(() => {
+    registerRef(player.id, avatarRef.current);
+    return () => registerRef(player.id, null);
+  }, [player.id, registerRef]);
 
   useEffect(() => {
-    if (pokeEvent?.target === player.id) {
-      setIsPoked(true);
-      if (isMe && 'vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
-      setTimeout(() => setIsPoked(false), 800);
+    if (shootEvent?.target === player.id) {
+      // Delay hit effect to match bullet travel time
+      const timer = setTimeout(() => {
+        setIsHit(true);
+        if (isMe && 'vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
+        setTimeout(() => setIsHit(false), 600);
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [pokeEvent, player.id, isMe]);
+  }, [shootEvent, player.id, isMe]);
 
   useEffect(() => {
     if (reactionEvent?.from === player.id) {
@@ -216,7 +321,7 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
   }, [reactionEvent, player.id]);
 
   return (
-    <div className={`relative flex flex-col items-center gap-1 ${isPoked ? 'player-poked' : ''}`}>
+    <div className={`relative flex flex-col items-center gap-1 ${isHit ? 'player-hit' : ''}`}>
       {/* Floating reaction */}
       {showReaction && (
         <div className="reaction-float" style={{ top: '-20px', left: '50%', transform: 'translateX(-50%)' }}>
@@ -224,14 +329,22 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
         </div>
       )}
 
+      {/* Hit flash */}
+      {isHit && (
+        <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+          <div className="hit-flash">💥</div>
+        </div>
+      )}
+
       {/* Avatar */}
       <div
-        onClick={() => !isMe && !revealed && pokePlayer(player.id)}
+        ref={avatarRef}
+        onClick={() => !isMe && !revealed && shootPlayer(player.id)}
         className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center
           text-lg lg:text-xl font-bold bg-gradient-to-br ${colorClass}
           border-2 border-bal-surface-light shadow-lg
-          ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
-        title={!isMe ? `Poke ${player.name}!` : ''}
+          ${!isMe && !revealed ? 'player-avatar-clickable cursor-crosshair' : ''}`}
+        title={!isMe ? `🔫 Spara a ${player.name}!` : ''}
       >
         {player.name.charAt(0).toUpperCase()}
       </div>
@@ -243,7 +356,7 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
         {player.name}
       </div>
 
-      {/* Vote card — positioned toward table center */}
+      {/* Vote card */}
       {hasVoted && (
         <div
           className={`absolute w-10 h-14 lg:w-12 lg:h-16 rounded-md flex items-center justify-center
@@ -265,26 +378,36 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
 }
 
 /* ── Mobile Player Row ── */
-function MobilePlayerRow({ player, index, hasVoted, vote, revealed }: {
+function MobilePlayerRow({ player, index, hasVoted, vote, revealed, registerRef }: {
   player: PlayerType;
   index: number;
   hasVoted: boolean;
   vote?: string;
   revealed: boolean;
+  registerRef: (id: string, el: HTMLElement | null) => void;
 }) {
-  const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
+  const { currentPlayer, shootPlayer, shootEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
   const colorClass = AVATAR_COLORS[index % AVATAR_COLORS.length];
-  const [isPoked, setIsPoked] = useState(false);
+  const [isHit, setIsHit] = useState(false);
   const [showReaction, setShowReaction] = useState<string | null>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (pokeEvent?.target === player.id) {
-      setIsPoked(true);
-      if (isMe && 'vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
-      setTimeout(() => setIsPoked(false), 800);
+    registerRef(player.id, avatarRef.current);
+    return () => registerRef(player.id, null);
+  }, [player.id, registerRef]);
+
+  useEffect(() => {
+    if (shootEvent?.target === player.id) {
+      const timer = setTimeout(() => {
+        setIsHit(true);
+        if (isMe && 'vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
+        setTimeout(() => setIsHit(false), 600);
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [pokeEvent, player.id, isMe]);
+  }, [shootEvent, player.id, isMe]);
 
   useEffect(() => {
     if (reactionEvent?.from === player.id) {
@@ -294,10 +417,11 @@ function MobilePlayerRow({ player, index, hasVoted, vote, revealed }: {
   }, [reactionEvent, player.id]);
 
   return (
-    <div className={`flex items-center gap-3 bg-bal-surface/50 rounded-xl px-3 py-2 border border-bal-surface-light/50 ${isPoked ? 'player-poked' : ''} ${isMe ? 'ring-1 ring-bal-green/50' : ''}`}>
+    <div className={`flex items-center gap-3 bg-bal-surface/50 rounded-xl px-3 py-2 border border-bal-surface-light/50 ${isHit ? 'player-hit' : ''} ${isMe ? 'ring-1 ring-bal-green/50' : ''}`}>
       <div
-        onClick={() => !isMe && !revealed && pokePlayer(player.id)}
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br ${colorClass} border-2 border-bal-surface-light shrink-0 ${!isMe && !revealed ? 'player-avatar-clickable' : ''}`}
+        ref={avatarRef}
+        onClick={() => !isMe && !revealed && shootPlayer(player.id)}
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br ${colorClass} border-2 border-bal-surface-light shrink-0 ${!isMe && !revealed ? 'player-avatar-clickable cursor-crosshair' : ''}`}
       >
         {player.name.charAt(0).toUpperCase()}
       </div>
@@ -306,6 +430,7 @@ function MobilePlayerRow({ player, index, hasVoted, vote, revealed }: {
           {player.name} {isMe && <span className="text-bal-green text-xs">(you)</span>}
         </div>
       </div>
+      {isHit && <span className="text-xl">💥</span>}
       {showReaction && <span className="text-xl">{showReaction}</span>}
       <div className="shrink-0">
         {hasVoted ? (
