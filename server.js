@@ -125,6 +125,16 @@ io.on('connection', (socket) => {
     console.log(`${playerName} joined room ${roomId}`);
   });
 
+  socket.on('shoot', (payload) => {
+    if (rateLimited(socket)) return;
+    if (!payload || typeof payload !== 'object') return;
+    const { roomId, targetId } = payload;
+    if (!validRoom(roomId) || !isStr(targetId) || !rooms[roomId]) return;
+    const shooter = rooms[roomId].players.find(p => p.id === socket.id);
+    if (!shooter) return;
+    io.to(roomId).emit('shoot', { from: socket.id, fromName: shooter.name, target: targetId });
+  });
+
   socket.on('vote', (payload) => {
     if (rateLimited(socket)) return;
     if (!payload || typeof payload !== 'object') return;

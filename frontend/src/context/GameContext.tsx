@@ -1,12 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { useSocket } from '../hooks/useSocket';
+import { useSocket, type ShootEvent } from '../hooks/useSocket';
 import type { RoomState } from '../types';
-
-interface PokeEvent {
-  from: string;
-  fromName: string;
-  target: string;
-}
 
 interface ReactionEvent {
   from: string;
@@ -20,7 +14,7 @@ interface GameContextType {
   currentRoom: string | null;
   currentPlayer: string | null;
   myVote: string | null;
-  pokeEvent: PokeEvent | null;
+  shootEvent: ShootEvent | null;
   reactionEvent: ReactionEvent | null;
   myPlayerId: string | null;
   joinError: string | null;
@@ -29,14 +23,14 @@ interface GameContextType {
   newRound: () => void;
   revealVotes: () => void;
   setMyVote: (vote: string | null) => void;
-  pokePlayer: (targetId: string) => void;
+  shootPlayer: (targetId: string) => void;
   sendReaction: (emoji: string) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { connected, roomState, pokeEvent, reactionEvent, joinError, joinRoom: socketJoin, vote: socketVote, newRound: socketNewRound, revealVotes: socketRevealVotes, poke: socketPoke, sendReaction: socketReaction } = useSocket();
+  const { connected, roomState, shootEvent, reactionEvent, joinError, joinRoom: socketJoin, vote: socketVote, newRound: socketNewRound, revealVotes: socketRevealVotes, shoot: socketShoot, sendReaction: socketReaction } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
   const [myVote, setMyVote] = useState<string | null>(null);
@@ -74,11 +68,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [currentRoom, socketRevealVotes]);
 
-  const pokePlayer = useCallback((targetId: string) => {
+  const shootPlayer = useCallback((targetId: string) => {
     if (currentRoom) {
-      socketPoke(currentRoom, targetId);
+      socketShoot(currentRoom, targetId);
     }
-  }, [currentRoom, socketPoke]);
+  }, [currentRoom, socketShoot]);
 
   const sendReaction = useCallback((emoji: string) => {
     if (currentRoom) {
@@ -93,7 +87,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       currentRoom,
       currentPlayer,
       myVote,
-      pokeEvent,
+      shootEvent,
       reactionEvent,
       myPlayerId,
       joinError,
@@ -102,7 +96,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       newRound,
       revealVotes,
       setMyVote,
-      pokePlayer,
+      shootPlayer,
       sendReaction,
     }}>
       {children}

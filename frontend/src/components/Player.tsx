@@ -21,21 +21,21 @@ interface PlayerProps {
 }
 
 export function Player({ player, position, index, hasVoted, vote, revealed }: PlayerProps) {
-  const { currentPlayer, pokePlayer, pokeEvent, reactionEvent } = useGame();
+  const { currentPlayer, shootPlayer, shootEvent, reactionEvent } = useGame();
   const isMe = player.name === currentPlayer;
   const colorClass = AVATAR_COLORS[index % AVATAR_COLORS.length];
-  const [isPoked, setIsPoked] = useState(false);
+  const [isHit, setIsHit] = useState(false);
   const [showReaction, setShowReaction] = useState<string | null>(null);
 
   useEffect(() => {
-    if (pokeEvent?.target === player.id) {
-      setIsPoked(true);
+    if (shootEvent?.target === player.id) {
+      setIsHit(true);
       if (isMe && 'vibrate' in navigator) {
         navigator.vibrate([100, 50, 100, 50, 100]);
       }
-      setTimeout(() => setIsPoked(false), 800);
+      setTimeout(() => setIsHit(false), 600);
     }
-  }, [pokeEvent, player.id, isMe]);
+  }, [shootEvent, player.id, isMe]);
 
   useEffect(() => {
     if (reactionEvent?.from === player.id) {
@@ -46,13 +46,13 @@ export function Player({ player, position, index, hasVoted, vote, revealed }: Pl
 
   const handleClick = () => {
     if (!isMe && !revealed) {
-      pokePlayer(player.id);
+      shootPlayer(player.id);
     }
   };
 
   return (
     <div
-      className={`absolute flex flex-col items-center gap-1 ${isPoked ? 'player-poked' : ''}`}
+      className={`absolute flex flex-col items-center gap-1 ${isHit ? 'player-hit' : ''}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
