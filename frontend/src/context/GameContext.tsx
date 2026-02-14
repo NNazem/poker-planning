@@ -1,12 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { useSocket, type ShootEvent } from '../hooks/useSocket';
-import type { RoomState } from '../types';
-
-interface ReactionEvent {
-  from: string;
-  fromName: string;
-  emoji: string;
-}
+import { useSocket } from '../hooks/useSocket';
+import type { RoomState, ShootEvent, ReactionEvent } from '../types';
 
 interface GameContextType {
   connected: boolean;
