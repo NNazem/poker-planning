@@ -2,7 +2,9 @@
 let audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext {
-  if (!audioCtx) audioCtx = new AudioContext();
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new AudioContext();
+  }
   return audioCtx;
 }
 
