@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
-import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
+import { ResultsDisplay } from './ResultsDisplay';
 import { playPewSound, playHitSound } from '../utils/sounds';
+import { AVATAR_COLORS } from '../constants/avatar';
 import type { Player as PlayerType } from '../types';
 
 // Table center in percentage
@@ -33,19 +34,6 @@ function getCardOffset(seatX: number, seatY: number): { dx: number; dy: number }
   const scale = 85 / len;
   return { dx: dirX * scale, dy: dirY * scale };
 }
-
-const AVATAR_COLORS = [
-  'from-emerald-700 to-emerald-500',
-  'from-amber-700 to-amber-500',
-  'from-teal-700 to-teal-500',
-  'from-rose-800 to-rose-600',
-  'from-violet-800 to-violet-600',
-  'from-cyan-800 to-cyan-600',
-  'from-lime-700 to-lime-500',
-  'from-fuchsia-800 to-fuchsia-600',
-  'from-orange-700 to-orange-500',
-  'from-sky-800 to-sky-600',
-];
 
 // ── Bullet component ──
 function Bullet({ fromEl, toEl, onDone }: { fromEl: HTMLElement; toEl: HTMLElement; onDone: () => void }) {

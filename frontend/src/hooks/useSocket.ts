@@ -1,22 +1,12 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import type { RoomState } from '../types';
+import type { RoomState, ShootEvent, ReactionEvent } from '../types';
+
+export type { ShootEvent };
 
 const SERVER_URL = import.meta.env.DEV
   ? 'http://localhost:3000'
   : window.location.origin;
-
-export interface ShootEvent {
-  from: string;
-  fromName: string;
-  target: string;
-}
-
-interface ReactionEvent {
-  from: string;
-  fromName: string;
-  emoji: string;
-}
 
 interface UseSocketReturn {
   connected: boolean;
