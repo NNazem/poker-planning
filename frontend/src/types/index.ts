@@ -9,16 +9,12 @@ export interface RoomState {
   revealed: boolean;
 }
 
-export interface ShootEvent {
-  from: string;
-  fromName: string;
-  target: string;
-}
-
-export interface ReactionEvent {
-  from: string;
-  fromName: string;
-  emoji: string;
+export interface GameState {
+  connected: boolean;
+  currentRoom: string | null;
+  currentPlayer: string | null;
+  roomState: RoomState | null;
+  myVote: string | null;
 }
 
 export type VoteValue = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '?' | '☕';
