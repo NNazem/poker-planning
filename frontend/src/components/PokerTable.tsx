@@ -2,108 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
 import { ResultsModal as ResultsDisplay } from './ResultsDisplay';
-import { playPewSound, playHitSound } from '../utils/sounds';
-import type { Player as PlayerType } from '../types';
-
-// Table center in percentage
-const TABLE_CENTER = { x: 50, y: 50 };
-
-// Generate N evenly-spaced seats around an ellipse
-function generateSeats(count: number): { x: number; y: number }[] {
-  const n = Math.min(Math.max(count, 1), 10);
-  const seats: { x: number; y: number }[] = [];
-  const cx = 50, cy = 48;
-  const rx = 44, ry = 44;
-  const startAngle = -Math.PI / 2;
-  for (let i = 0; i < n; i++) {
-    const angle = startAngle + (2 * Math.PI * i) / n;
-    seats.push({
-      x: Math.round(cx + rx * Math.cos(angle)),
-      y: Math.round(cy + ry * Math.sin(angle)),
-    });
-  }
-  return seats;
-}
-
-function getCardOffset(seatX: number, seatY: number): { dx: number; dy: number } {
-  const dirX = TABLE_CENTER.x - seatX;
-  const dirY = TABLE_CENTER.y - seatY;
-  const len = Math.sqrt(dirX * dirX + dirY * dirY);
-  if (len === 0) return { dx: 0, dy: 0 };
-  const scale = 85 / len;
-  return { dx: dirX * scale, dy: dirY * scale };
-}
-
-const AVATAR_COLORS = [
-  'from-emerald-700 to-emerald-500',
-  'from-amber-700 to-amber-500',
-  'from-teal-700 to-teal-500',
-  'from-rose-800 to-rose-600',
-  'from-violet-800 to-violet-600',
-  'from-cyan-800 to-cyan-600',
-  'from-lime-700 to-lime-500',
-  'from-fuchsia-800 to-fuchsia-600',
-  'from-orange-700 to-orange-500',
-  'from-sky-800 to-sky-600',
-];
-
-// ── Bullet component ──
-function Bullet({ fromEl, toEl, onDone }: { fromEl: HTMLElement; toEl: HTMLElement; onDone: () => void }) {
-  const bulletRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fromRect = fromEl.getBoundingClientRect();
-    const toRect = toEl.getBoundingClientRect();
-    const startX = fromRect.left + fromRect.width / 2;
-    const startY = fromRect.top + fromRect.height / 2;
-    const endX = toRect.left + toRect.width / 2;
-    const endY = toRect.top + toRect.height / 2;
-
-    const bullet = bulletRef.current;
-    if (!bullet) return;
-
-    // Calculate angle for rotation
-    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-
-    bullet.style.left = `${startX}px`;
-    bullet.style.top = `${startY}px`;
-    bullet.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-
-    playPewSound();
-
-    const anim = bullet.animate([
-      { left: `${startX}px`, top: `${startY}px`, opacity: 1 },
-      { left: `${endX}px`, top: `${endY}px`, opacity: 1 },
-    ], {
-      duration: 300,
-      easing: 'linear',
-      fill: 'forwards',
-    });
-
-    anim.onfinish = () => {
-      playHitSound();
-      onDone();
-    };
-  }, [fromEl, toEl, onDone]);
-
-  return (
-    <div
-      ref={bulletRef}
-      className="fixed z-50 pointer-events-none"
-      style={{ width: 0, height: 0 }}
-    >
-      {/* Bullet trail */}
-      <div className="absolute" style={{
-        width: '18px',
-        height: '6px',
-        background: 'linear-gradient(90deg, transparent, #fbbf24, #f59e0b, #fff)',
-        borderRadius: '3px',
-        boxShadow: '0 0 8px #fbbf24, 0 0 16px #f59e0b',
-        transform: 'translate(-50%, -50%)',
-      }} />
-    </div>
-  );
-}
+import { Bullet } from './Bullet';
+import { PlayerSeat } from './PlayerSeat';
+import { generateSeats, getCardOffset } from '../utils/seats';
 
 export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onReveal?: () => void }) {
   const { t } = useTranslation();
@@ -144,6 +45,13 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
   const totalSeats = Math.max(players.length, 6);
   const seats = generateSeats(totalSeats);
 
+  const bulletsOverlay = activeBullets.map(b => {
+    const fromEl = playerRefs.current[b.from];
+    const toEl = playerRefs.current[b.target];
+    if (!fromEl || !toEl) return null;
+    return <Bullet key={b.id} fromEl={fromEl} toEl={toEl} onDone={() => removeBullet(b.id)} />;
+  });
+
   // Mobile: vertical list
   if (isMobile) {
     return (
@@ -167,7 +75,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
           )}
           <div className="flex flex-col gap-2 relative z-10">
             {players.map((player, index) => (
-              <MobilePlayerRow
+              <PlayerSeat
                 key={player.id}
                 player={player}
                 index={index}
@@ -175,6 +83,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
                 vote={roomState!.votes[player.id]}
                 revealed={roomState!.revealed}
                 registerRef={registerPlayerRef}
+                variant="mobile"
               />
             ))}
             {Array.from({ length: Math.max(0, 6 - players.length) }).map((_, i) => (
@@ -188,13 +97,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
           </div>
           <ResultsDisplay />
         </div>
-        {/* Bullets overlay */}
-        {activeBullets.map(b => {
-          const fromEl = playerRefs.current[b.from];
-          const toEl = playerRefs.current[b.target];
-          if (!fromEl || !toEl) return null;
-          return <Bullet key={b.id} fromEl={fromEl} toEl={toEl} onDone={() => removeBullet(b.id)} />;
-        })}
+        {bulletsOverlay}
       </div>
     );
   }
@@ -219,7 +122,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
                 }}
               >
                 {player ? (
-                  <SeatPlayer
+                  <PlayerSeat
                     player={player}
                     index={i}
                     hasVoted={roomState!.votes[player.id] !== undefined}
@@ -227,6 +130,7 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
                     revealed={roomState!.revealed}
                     cardOffset={cardOffset}
                     registerRef={registerPlayerRef}
+                    variant="desktop"
                   />
                 ) : (
                   <EmptySeat />
@@ -256,18 +160,11 @@ export function PokerTable({ allVoted, onReveal }: { allVoted?: boolean; onRevea
         </div>
       </div>
 
-      {/* Bullets overlay */}
-      {activeBullets.map(b => {
-        const fromEl = playerRefs.current[b.from];
-        const toEl = playerRefs.current[b.target];
-        if (!fromEl || !toEl) return null;
-        return <Bullet key={b.id} fromEl={fromEl} toEl={toEl} onDone={() => removeBullet(b.id)} />;
-      })}
+      {bulletsOverlay}
     </div>
   );
 }
 
-/* ── Empty Seat ── */
 function EmptySeat() {
   return (
     <div className="flex flex-col items-center gap-1 opacity-25">

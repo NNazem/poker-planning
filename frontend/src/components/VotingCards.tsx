@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
-
-const ALL_VOTES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+import { VOTE_OPTIONS } from '../constants/votes';
 
 // Suit symbols for decoration
 const SUITS = ['♠', '♥', '♦', '♣'];
@@ -18,11 +17,10 @@ function getSuitColor(index: number) {
 
 export function VotingCards() {
   const { t } = useTranslation();
-  const { vote, myVote, setMyVote } = useGame();
+  const { vote, myVote } = useGame();
 
   const handleVote = (value: string) => {
     vote(value);
-    setMyVote(value);
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
@@ -35,7 +33,7 @@ export function VotingCards() {
       </h2>
 
       <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-2 lg:gap-3 max-w-4xl mx-auto px-2">
-        {ALL_VOTES.map((value, index) => {
+        {VOTE_OPTIONS.map((value, index) => {
           const selected = myVote === value;
           const suit = getSuit(index);
           const suitColor = getSuitColor(index);

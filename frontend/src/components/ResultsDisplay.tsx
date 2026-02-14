@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../context/GameContext';
+import { VOTE_OPTIONS } from '../constants/votes';
 import confetti from 'canvas-confetti';
 
 function VoteRow({ name, pVote, color, isMe, colorClasses, onChangeVote, onDirectVote, voteOptions }: {
@@ -54,7 +55,7 @@ function VoteRow({ name, pVote, color, isMe, colorClasses, onChangeVote, onDirec
   );
 }
 
-export function ResultsModal() {
+export function ResultsDisplay() {
   const { t } = useTranslation();
   const { roomState, newRound, setMyVote, vote, currentPlayer } = useGame();
 
@@ -122,7 +123,6 @@ export function ResultsModal() {
   if (!roomState?.revealed) return null;
 
   const totalVotes = Object.keys(roomState.votes).length;
-  const VOTE_OPTIONS = ['1','2','3','4','5','6','7','8','9','10'];
 
   const handleChangeVote = (direction: 'up' | 'down') => {
     const myPlayer = roomState.players.find(p => p.name === currentPlayer);
