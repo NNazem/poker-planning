@@ -18,11 +18,10 @@ function getSuitColor(index: number) {
 
 export function VotingCards() {
   const { t } = useTranslation();
-  const { vote, myVote, setMyVote } = useGame();
+  const { vote, myVote } = useGame();
 
   const handleVote = (value: string) => {
     vote(value);
-    setMyVote(value);
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }

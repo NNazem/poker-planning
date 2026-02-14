@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useSocket, type ShootEvent } from '../hooks/useSocket';
 import type { RoomState } from '../types';
 
@@ -37,10 +37,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
 
   // Find my player ID from roomState
-  const actualPlayerId = roomState?.players.find(p => p.name === currentPlayer)?.id ?? null;
-  if (actualPlayerId && actualPlayerId !== myPlayerId) {
-    setMyPlayerId(actualPlayerId);
-  }
+  useEffect(() => {
+    const actualPlayerId = roomState?.players.find(p => p.name === currentPlayer)?.id ?? null;
+    if (actualPlayerId && actualPlayerId !== myPlayerId) {
+      setMyPlayerId(actualPlayerId);
+    }
+  }, [roomState, currentPlayer, myPlayerId]);
 
   const joinRoom = useCallback((roomId: string, playerName: string) => {
     socketJoin(roomId, playerName);
