@@ -1,22 +1,12 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import type { RoomState } from '../types';
+import type { RoomState, ShootEvent, ReactionEvent } from '../types';
+
+export type { ShootEvent };
 
 const SERVER_URL = import.meta.env.DEV
   ? 'http://localhost:3000'
   : window.location.origin;
-
-export interface ShootEvent {
-  from: string;
-  fromName: string;
-  target: string;
-}
-
-interface ReactionEvent {
-  from: string;
-  fromName: string;
-  emoji: string;
-}
 
 interface UseSocketReturn {
   connected: boolean;
@@ -39,6 +29,8 @@ export function useSocket(): UseSocketReturn {
   const [shootEvent, setShootEvent] = useState<ShootEvent | null>(null);
   const [reactionEvent, setReactionEvent] = useState<ReactionEvent | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const shootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const socket = io(SERVER_URL);
@@ -59,8 +51,9 @@ export function useSocket(): UseSocketReturn {
     });
 
     socket.on('shoot', (data: ShootEvent) => {
+      if (shootTimerRef.current) clearTimeout(shootTimerRef.current);
       setShootEvent(data);
-      setTimeout(() => setShootEvent(null), 1500);
+      shootTimerRef.current = setTimeout(() => setShootEvent(null), 1500);
     });
 
     socket.on('join-error', (data: { message: string }) => {
@@ -68,11 +61,14 @@ export function useSocket(): UseSocketReturn {
     });
 
     socket.on('reaction', (data: ReactionEvent) => {
+      if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
       setReactionEvent(data);
-      setTimeout(() => setReactionEvent(null), 2000);
+      reactionTimerRef.current = setTimeout(() => setReactionEvent(null), 2000);
     });
 
     return () => {
+      if (shootTimerRef.current) clearTimeout(shootTimerRef.current);
+      if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
       socket.close();
     };
   }, []);
