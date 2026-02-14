@@ -304,7 +304,8 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
   useEffect(() => {
     if (reactionEvent?.from === player.id) {
       setShowReaction(reactionEvent.emoji);
-      setTimeout(() => setShowReaction(null), 2000);
+      const timer = setTimeout(() => setShowReaction(null), 2000);
+      return () => clearTimeout(timer);
     }
   }, [reactionEvent, player.id]);
 
@@ -400,7 +401,8 @@ function MobilePlayerRow({ player, index, hasVoted, vote, revealed, registerRef 
   useEffect(() => {
     if (reactionEvent?.from === player.id) {
       setShowReaction(reactionEvent.emoji);
-      setTimeout(() => setShowReaction(null), 2000);
+      const timer = setTimeout(() => setShowReaction(null), 2000);
+      return () => clearTimeout(timer);
     }
   }, [reactionEvent, player.id]);
 
