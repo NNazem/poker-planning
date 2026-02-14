@@ -344,7 +344,7 @@ function SeatPlayer({ player, index, hasVoted, vote, revealed, cardOffset = { dx
           text-lg lg:text-xl font-bold bg-gradient-to-br ${colorClass}
           border-2 border-bal-surface-light shadow-lg
           ${!isMe && !revealed ? 'player-avatar-clickable cursor-crosshair' : ''}`}
-        title={!isMe ? `🔫 Spara a ${player.name}!` : ''}
+        title={!isMe ? `🔫 Shoot ${player.name}!` : ''}
       >
         {player.name.charAt(0).toUpperCase()}
       </div>

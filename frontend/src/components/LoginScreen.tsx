@@ -39,7 +39,7 @@ export function LoginScreen({ onJoin, initialRoom }: LoginScreenProps) {
       alert(t('login.namePlaceholder') + '!');
       return;
     }
-    const finalRoomId = roomId.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
+    const finalRoomId = roomId.trim() || `room-${Math.random().toString(36).substring(2, 11)}`;
     setPendingRoom(finalRoomId);
     joinRoom(finalRoomId, playerName.trim());
   };

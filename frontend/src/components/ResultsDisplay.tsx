@@ -15,7 +15,7 @@ function VoteRow({ name, pVote, color, isMe, colorClasses, onChangeVote, onDirec
   if (isMe && editing) {
     return (
       <div className={`flex items-center justify-between px-4 py-2 rounded-lg border ${colorClasses[color]} font-mono`}>
-        <span className="text-sm text-bal-text">{name} (tu)</span>
+        <span className="text-sm text-bal-text">{name} (you)</span>
         <div className="flex items-center gap-1 flex-wrap justify-end">
           {voteOptions.map(v => (
             <button
@@ -31,7 +31,7 @@ function VoteRow({ name, pVote, color, isMe, colorClasses, onChangeVote, onDirec
 
   return (
     <div className={`flex items-center justify-between px-4 py-2 rounded-lg border ${colorClasses[color]} font-mono`}>
-      <span className="text-sm text-bal-text">{name} {isMe ? '(tu)' : ''}</span>
+      <span className="text-sm text-bal-text">{name} {isMe ? '(you)' : ''}</span>
       <div className="flex items-center gap-2">
         {isMe && (
           <button
